@@ -1,0 +1,13 @@
+---
+- name: Update homelab machines
+  hosts: homelab
+  become: true
+
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Upgrade installed packages
+      ansible.builtin.apt:
+        upgrade: yes
