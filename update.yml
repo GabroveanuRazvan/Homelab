@@ -1,0 +1,17 @@
+---
+- name: Update Ubuntu homelab machines
+  hosts: "{{ update_target_group | default('homelab') }}"
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Check that the target uses apt
+      ansible.builtin.assert:
+        that: ansible_pkg_mgr == "apt"
+        fail_msg: "The update playbook currently supports apt-based hosts only."
+
+    - name: Update apt cache and upgrade installed packages
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+        upgrade: safe

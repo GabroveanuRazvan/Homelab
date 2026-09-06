@@ -1,0 +1,64 @@
+---
+- name: Validate Docker architecture support
+  ansible.builtin.assert:
+    that: ansible_architecture in docker_apt_architectures
+    fail_msg: "Docker repository architecture mapping is missing for {{ ansible_architecture }}."
+
+- name: Install Docker repository prerequisites
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+    state: present
+
+- name: Create the apt keyring directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Install Docker's official repository signing key
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Configure Docker's official apt repository
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [arch={{ docker_apt_architectures[ansible_architecture] }}
+      signed-by=/etc/apt/keyrings/docker.asc]
+      https://download.docker.com/linux/ubuntu
+      {{ ansible_distribution_release }} stable
+    filename: docker
+    state: present
+    update_cache: true
+
+- name: Install Docker Engine and Compose
+  ansible.builtin.apt:
+    name: "{{ docker_packages }}"
+    state: present
+
+- name: Enable and start Docker
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Add the primary user to the Docker group
+  ansible.builtin.user:
+    name: "{{ primary_user }}"
+    groups: docker
+    append: true
+
+- name: Verify Docker and Compose
+  ansible.builtin.command:
+    argv: "{{ item }}"
+  loop:
+    - [docker, --version]
+    - [docker, compose, version]
+  changed_when: false

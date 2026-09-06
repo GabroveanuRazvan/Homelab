@@ -1,0 +1,37 @@
+---
+- name: Provision homelab development machines
+  hosts: provision_targets
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Check that the target is Ubuntu
+      ansible.builtin.assert:
+        that:
+          - ansible_distribution == "Ubuntu"
+        fail_msg: >-
+          This provisioning playbook supports Ubuntu only; detected
+          {{ ansible_distribution }} {{ ansible_distribution_version }}.
+
+    - name: Read the primary user's account information
+      ansible.builtin.getent:
+        database: passwd
+        key: "{{ primary_user }}"
+
+    - name: Record the primary user's home directory
+      ansible.builtin.set_fact:
+        primary_user_home: "{{ ansible_facts.getent_passwd[primary_user][4] }}"
+
+  roles:
+    - role: common
+    - role: development
+    - role: ebpf
+      when: install_ebpf_tools | bool
+    - role: golang
+      when: install_go | bool
+    - role: rust
+      when: install_rust | bool
+    - role: docker
+      when: install_docker | bool
+    - role: vnc
+      when: install_vnc | bool

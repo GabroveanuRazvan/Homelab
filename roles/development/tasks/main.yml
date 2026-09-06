@@ -1,0 +1,5 @@
+---
+- name: Install compiler, build, and debugging tools
+  ansible.builtin.apt:
+    name: "{{ development_packages }}"
+    state: present

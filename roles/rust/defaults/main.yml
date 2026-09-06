@@ -1,0 +1,5 @@
+---
+rustup_download_url: https://sh.rustup.rs
+rustup_installer_path: /tmp/rustup-init.sh
+cargo_home: "{{ primary_user_home }}/.cargo"
+rustup_home: "{{ primary_user_home }}/.rustup"

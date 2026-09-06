@@ -1,0 +1,9 @@
+---
+ebpf_packages:
+  - bpftool
+  - clang
+  - libbpf-dev
+  - libelf-dev
+  - llvm
+  - linux-tools-common
+  - zlib1g-dev

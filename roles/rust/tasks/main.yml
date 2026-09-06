@@ -1,0 +1,113 @@
+---
+- name: Check whether rustup is installed
+  ansible.builtin.stat:
+    path: "{{ cargo_home }}/bin/rustup"
+  register: rustup_binary
+
+- name: Download the rustup installer
+  ansible.builtin.get_url:
+    url: "{{ rustup_download_url }}"
+    dest: "{{ rustup_installer_path }}"
+    mode: "0755"
+  when:
+    - not rustup_binary.stat.exists
+    - not ansible_check_mode
+
+- name: Install rustup for the primary user
+  ansible.builtin.command:
+    argv:
+      - "{{ rustup_installer_path }}"
+      - -y
+      - --no-modify-path
+      - --profile
+      - default
+    creates: "{{ cargo_home }}/bin/rustup"
+  become_user: "{{ primary_user }}"
+  environment:
+    CARGO_HOME: "{{ cargo_home }}"
+    RUSTUP_HOME: "{{ rustup_home }}"
+
+- name: Ensure the stable Rust toolchain is current
+  ansible.builtin.command:
+    argv: ["{{ cargo_home }}/bin/rustup", update, stable]
+  become_user: "{{ primary_user }}"
+  environment:
+    CARGO_HOME: "{{ cargo_home }}"
+    RUSTUP_HOME: "{{ rustup_home }}"
+  register: rustup_update
+  changed_when: >-
+    'unchanged' not in (rustup_update.stdout + rustup_update.stderr)
+
+- name: Install Rust formatting and linting components
+  ansible.builtin.command:
+    argv: ["{{ cargo_home }}/bin/rustup", component, add, rustfmt, clippy]
+  become_user: "{{ primary_user }}"
+  environment:
+    CARGO_HOME: "{{ cargo_home }}"
+    RUSTUP_HOME: "{{ rustup_home }}"
+  register: rust_components
+  changed_when: >-
+    'up to date' not in (rust_components.stdout + rust_components.stderr)
+
+- name: Add Cargo binaries to interactive-shell PATH
+  ansible.builtin.copy:
+    dest: /etc/profile.d/rust.sh
+    content: |
+      # Managed by Ansible
+      if [ "${USER:-}" = "{{ primary_user }}" ]; then
+        export PATH="{{ cargo_home }}/bin:$PATH"
+      fi
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Read the installed bpf-linker version marker
+  ansible.builtin.slurp:
+    src: "{{ cargo_home }}/.bpf-linker-version"
+  register: bpf_linker_version_marker
+  failed_when: false
+
+- name: Check whether bpf-linker exists
+  ansible.builtin.stat:
+    path: "{{ cargo_home }}/bin/bpf-linker"
+  register: bpf_linker_binary
+
+- name: Install the pinned bpf-linker for the primary user
+  ansible.builtin.command:
+    argv:
+      - "{{ cargo_home }}/bin/cargo"
+      - install
+      - bpf-linker
+      - --version
+      - "{{ bpf_linker_version }}"
+      - --locked
+  become_user: "{{ primary_user }}"
+  environment:
+    CARGO_HOME: "{{ cargo_home }}"
+    RUSTUP_HOME: "{{ rustup_home }}"
+    PATH: "{{ cargo_home }}/bin:/usr/local/bin:/usr/bin:/bin"
+  when: >-
+    not bpf_linker_binary.stat.exists or
+    bpf_linker_version_marker.content is not defined or
+    (bpf_linker_version_marker.content | b64decode | trim) != bpf_linker_version
+
+- name: Record the installed bpf-linker version
+  ansible.builtin.copy:
+    dest: "{{ cargo_home }}/.bpf-linker-version"
+    content: "{{ bpf_linker_version }}\n"
+    owner: "{{ primary_user }}"
+    group: "{{ primary_user }}"
+    mode: "0644"
+
+- name: Verify Rust and bpf-linker
+  ansible.builtin.command:
+    argv: "{{ item }}"
+  loop:
+    - ["{{ cargo_home }}/bin/rustc", --version]
+    - ["{{ cargo_home }}/bin/cargo", --version]
+    - ["{{ cargo_home }}/bin/bpf-linker", --version]
+  become_user: "{{ primary_user }}"
+  environment:
+    CARGO_HOME: "{{ cargo_home }}"
+    RUSTUP_HOME: "{{ rustup_home }}"
+  changed_when: false

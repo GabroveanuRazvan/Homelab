@@ -1,0 +1,29 @@
+---
+common_packages:
+  - bash-completion
+  - ca-certificates
+  - curl
+  - dnsutils
+  - e2fsprogs
+  - file
+  - git
+  - htop
+  - iperf3
+  - iproute2
+  - jq
+  - less
+  - lsof
+  - net-tools
+  - netcat-openbsd
+  - openssh-server
+  - rsync
+  - strace
+  - tcpdump
+  - tmux
+  - traceroute
+  - tree
+  - ufw
+  - unzip
+  - util-linux
+  - wget
+  - zip

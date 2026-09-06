@@ -1,0 +1,10 @@
+---
+development_packages:
+  - autoconf
+  - automake
+  - build-essential
+  - cmake
+  - gdb
+  - libtool
+  - make
+  - pkg-config

@@ -1,0 +1,5 @@
+*.retry
+.vault_pass
+vault-password*
+group_vars/**/vault.yml
+host_vars/**/vault.yml

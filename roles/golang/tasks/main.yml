@@ -1,0 +1,114 @@
+---
+- name: Validate the selected Go architecture and checksum
+  ansible.builtin.assert:
+    that:
+      - go_arch in go_checksums
+      - >-
+        (ansible_architecture == 'x86_64' and go_arch == 'amd64') or
+        (ansible_architecture == 'aarch64' and go_arch == 'arm64')
+    fail_msg: >-
+      go_arch={{ go_arch }} does not match ansible_architecture={{ ansible_architecture }},
+      or no checksum is configured for it.
+
+- name: Check the installed Go version
+  ansible.builtin.command: /usr/local/go/bin/go version
+  register: installed_go
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Install the selected Go release
+  when:
+    - ("go" + go_version) not in installed_go.stdout
+    - not ansible_check_mode
+  block:
+    - name: Download the Go archive
+      ansible.builtin.get_url:
+        url: "{{ go_download_url }}"
+        dest: "/tmp/go{{ go_version }}.linux-{{ go_arch }}.tar.gz"
+        checksum: "sha256:{{ go_checksums[go_arch] }}"
+        mode: "0644"
+
+    - name: Remove a different Go installation
+      ansible.builtin.file:
+        path: "{{ go_install_root }}/go"
+        state: absent
+
+    - name: Extract Go into the installation root
+      ansible.builtin.unarchive:
+        src: "/tmp/go{{ go_version }}.linux-{{ go_arch }}.tar.gz"
+        dest: "{{ go_install_root }}"
+        remote_src: true
+
+- name: Publish Go system-wide in PATH
+  ansible.builtin.copy:
+    dest: /etc/profile.d/go.sh
+    content: |
+      # Managed by Ansible
+      export PATH="$PATH:/usr/local/go/bin"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Create the primary user's Go binary directory
+  ansible.builtin.file:
+    path: "{{ go_bin_directory }}"
+    state: directory
+    owner: "{{ primary_user }}"
+    group: "{{ primary_user }}"
+    mode: "0755"
+
+- name: Add the user's Go binaries to interactive-shell PATH
+  ansible.builtin.copy:
+    dest: /etc/profile.d/go-user.sh
+    content: |
+      # Managed by Ansible
+      if [ "${USER:-}" = "{{ primary_user }}" ]; then
+        export PATH="$PATH:{{ go_bin_directory }}"
+      fi
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Read the installed bpf2go version marker
+  ansible.builtin.slurp:
+    src: "{{ go_bin_directory }}/.bpf2go-version"
+  register: bpf2go_version_marker
+  failed_when: false
+
+- name: Check whether bpf2go exists
+  ansible.builtin.stat:
+    path: "{{ go_bin_directory }}/bpf2go"
+  register: bpf2go_binary
+
+- name: Install the pinned bpf2go utility for the primary user
+  ansible.builtin.command:
+    argv:
+      - /usr/local/go/bin/go
+      - install
+      - "github.com/cilium/ebpf/cmd/bpf2go@{{ bpf2go_version }}"
+  become_user: "{{ primary_user }}"
+  environment:
+    GOPATH: "{{ primary_user_home }}/go"
+    GOBIN: "{{ go_bin_directory }}"
+  when: >-
+    not bpf2go_binary.stat.exists or
+    bpf2go_version_marker.content is not defined or
+    (bpf2go_version_marker.content | b64decode | trim) != bpf2go_version
+
+- name: Record the installed bpf2go version
+  ansible.builtin.copy:
+    dest: "{{ go_bin_directory }}/.bpf2go-version"
+    content: "{{ bpf2go_version }}\n"
+    owner: "{{ primary_user }}"
+    group: "{{ primary_user }}"
+    mode: "0644"
+
+- name: Verify Go and bpf2go
+  ansible.builtin.command:
+    argv: "{{ item }}"
+  loop:
+    - [/usr/local/go/bin/go, version]
+    - ["{{ go_bin_directory }}/bpf2go", -h]
+  become_user: "{{ primary_user }}"
+  changed_when: false

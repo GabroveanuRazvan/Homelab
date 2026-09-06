@@ -1,13 +1,4 @@
 ---
-- name: Update homelab machines
-  hosts: homelab
-  become: true
-
-  tasks:
-    - name: Update apt cache
-      ansible.builtin.apt:
-        update_cache: true
-
-    - name: Upgrade installed packages
-      ansible.builtin.apt:
-        upgrade: yes
+# Compatibility alias; new documentation uses update.yml.
+- name: Import the package update playbook
+  ansible.builtin.import_playbook: update.yml

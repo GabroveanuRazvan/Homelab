@@ -1,0 +1,10 @@
+---
+docker_apt_architectures:
+  x86_64: amd64
+  aarch64: arm64
+docker_packages:
+  - containerd.io
+  - docker-buildx-plugin
+  - docker-ce
+  - docker-ce-cli
+  - docker-compose-plugin
