@@ -1,0 +1,49 @@
+---
+- name: Validate the Kubernetes minor release channel
+  ansible.builtin.assert:
+    that:
+      - kubernetes_minor_version is match('^v[0-9]+\.[0-9]+$')
+    fail_msg: >-
+      kubernetes_minor_version must look like v1.37, not
+      {{ kubernetes_minor_version }}.
+
+- name: Install Kubernetes repository prerequisites
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - gnupg
+    state: present
+
+- name: Create the apt keyring directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Install the Kubernetes repository signing key
+  ansible.builtin.get_url:
+    url: "{{ kubernetes_apt_key_url }}"
+    dest: /etc/apt/keyrings/kubernetes-apt-keyring.asc
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Configure the official Kubernetes apt repository
+  ansible.builtin.apt_repository:
+    repo: "{{ kubernetes_apt_repository }}"
+    filename: kubernetes
+    state: present
+    update_cache: true
+
+- name: Install kubectl
+  ansible.builtin.apt:
+    name: kubectl
+    state: present
+
+- name: Verify kubectl
+  ansible.builtin.command:
+    argv: [kubectl, version, --client]
+  changed_when: false

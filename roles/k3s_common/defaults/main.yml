@@ -1,0 +1,7 @@
+---
+k3s_install_script_path: /usr/local/src/k3s-install.sh
+k3s_install_script_url: >-
+  https://raw.githubusercontent.com/k3s-io/k3s/{{ k3s_version | urlencode }}/install.sh
+k3s_server_host: "{{ groups['k3s_control_plane'][0] }}"
+k3s_server_address: >-
+  {{ hostvars[k3s_server_host].ansible_host | default(k3s_server_host) }}

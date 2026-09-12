@@ -1,0 +1,9 @@
+# Managed by Ansible
+node-name: "{{ inventory_hostname }}"
+write-kubeconfig-mode: "0640"
+write-kubeconfig-group: "{{ k3s_kubeconfig_group }}"
+tls-san:
+  - "{{ k3s_server_address }}"
+{% if k3s_server_extra_config %}
+{{ k3s_server_extra_config | to_nice_yaml(indent=2) }}
+{% endif %}

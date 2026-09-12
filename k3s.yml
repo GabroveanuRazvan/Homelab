@@ -1,0 +1,110 @@
+---
+- name: Validate the k3s inventory topology
+  hosts: localhost
+  connection: local
+  become: false
+  gather_facts: false
+
+  tasks:
+    - name: Require exactly one control-plane host
+      ansible.builtin.assert:
+        that:
+          - groups.get('k3s_control_plane', []) | length == 1
+        fail_msg: >-
+          This initial implementation requires exactly one host in
+          k3s_control_plane. Found: {{ groups.get('k3s_control_plane', []) }}
+
+    - name: Require distinct control-plane and worker hosts
+      ansible.builtin.assert:
+        that:
+          - >-
+            groups.get('k3s_control_plane', []) |
+            intersect(groups.get('k3s_workers', [])) | length == 0
+        fail_msg: A host cannot be both the control plane and a worker.
+
+- name: Bootstrap the k3s control plane
+  hosts: k3s_control_plane
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Check that the control plane is Ubuntu
+      ansible.builtin.assert:
+        that: ansible_distribution == "Ubuntu"
+        fail_msg: "The k3s roles currently support Ubuntu only."
+
+  roles:
+    - k3s_common
+    - k3s_server
+
+  post_tasks:
+    - name: Wait for the Kubernetes API from the Ansible controller
+      ansible.builtin.wait_for:
+        host: "{{ k3s_server_address }}"
+        port: "{{ k3s_api_port }}"
+        state: started
+        timeout: 180
+      delegate_to: localhost
+      become: false
+
+    - name: Read the generated agent join token
+      ansible.builtin.slurp:
+        src: /var/lib/rancher/k3s/server/agent-token
+      register: k3s_node_token
+      no_log: true
+
+    - name: Keep the join token in controller memory for the worker play
+      ansible.builtin.set_fact:
+        k3s_join_token: "{{ k3s_node_token.content | b64decode | trim }}"
+      delegate_to: localhost
+      delegate_facts: true
+      become: false
+      no_log: true
+
+- name: Join k3s worker nodes
+  hosts: k3s_workers
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Check that the worker is Ubuntu
+      ansible.builtin.assert:
+        that: ansible_distribution == "Ubuntu"
+        fail_msg: "The k3s roles currently support Ubuntu only."
+
+  roles:
+    - k3s_common
+    - k3s_agent
+
+- name: Verify all k3s nodes from the control plane
+  hosts: k3s_control_plane
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Wait for every configured node to become Ready
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/k3s
+          - kubectl
+          - get
+          - node
+          - "{{ item }}"
+          - -o
+          - "jsonpath={range .status.conditions[?(@.type=='Ready')]}{.status}{end}"
+      loop: "{{ groups['k3s_cluster'] }}"
+      register: k3s_node_ready
+      until: k3s_node_ready.stdout == "True"
+      retries: 36
+      delay: 5
+      changed_when: false
+
+    - name: Show the cluster nodes
+      ansible.builtin.command:
+        argv: [/usr/local/bin/k3s, kubectl, get, nodes, -o, wide]
+      register: k3s_nodes
+      changed_when: false
+
+    - name: Display the cluster nodes
+      ansible.builtin.debug:
+        var: k3s_nodes.stdout_lines

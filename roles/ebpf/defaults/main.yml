@@ -1,9 +1,9 @@
 ---
 ebpf_packages:
-  - bpftool
   - clang
   - libbpf-dev
   - libelf-dev
   - llvm
+  # Ubuntu's linux-tools-common provides the virtual bpftool package.
   - linux-tools-common
   - zlib1g-dev

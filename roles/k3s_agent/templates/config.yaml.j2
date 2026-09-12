@@ -1,0 +1,7 @@
+# Managed by Ansible
+node-name: "{{ inventory_hostname }}"
+server: "https://{{ k3s_server_address }}:{{ k3s_api_port }}"
+token: "{{ hostvars['localhost'].k3s_join_token }}"
+{% if k3s_agent_extra_config %}
+{{ k3s_agent_extra_config | to_nice_yaml(indent=2) }}
+{% endif %}

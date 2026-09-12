@@ -33,5 +33,7 @@
       when: install_rust | bool
     - role: docker
       when: install_docker | bool
+    - role: kubectl
+      when: install_kubectl | bool
     - role: vnc
       when: install_vnc | bool

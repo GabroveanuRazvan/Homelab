@@ -61,51 +61,12 @@
     group: root
     mode: "0644"
 
-- name: Read the installed bpf-linker version marker
-  ansible.builtin.slurp:
-    src: "{{ cargo_home }}/.bpf-linker-version"
-  register: bpf_linker_version_marker
-  failed_when: false
-
-- name: Check whether bpf-linker exists
-  ansible.builtin.stat:
-    path: "{{ cargo_home }}/bin/bpf-linker"
-  register: bpf_linker_binary
-
-- name: Install the pinned bpf-linker for the primary user
-  ansible.builtin.command:
-    argv:
-      - "{{ cargo_home }}/bin/cargo"
-      - install
-      - bpf-linker
-      - --version
-      - "{{ bpf_linker_version }}"
-      - --locked
-  become_user: "{{ primary_user }}"
-  environment:
-    CARGO_HOME: "{{ cargo_home }}"
-    RUSTUP_HOME: "{{ rustup_home }}"
-    PATH: "{{ cargo_home }}/bin:/usr/local/bin:/usr/bin:/bin"
-  when: >-
-    not bpf_linker_binary.stat.exists or
-    bpf_linker_version_marker.content is not defined or
-    (bpf_linker_version_marker.content | b64decode | trim) != bpf_linker_version
-
-- name: Record the installed bpf-linker version
-  ansible.builtin.copy:
-    dest: "{{ cargo_home }}/.bpf-linker-version"
-    content: "{{ bpf_linker_version }}\n"
-    owner: "{{ primary_user }}"
-    group: "{{ primary_user }}"
-    mode: "0644"
-
-- name: Verify Rust and bpf-linker
+- name: Verify Rust and Cargo
   ansible.builtin.command:
     argv: "{{ item }}"
   loop:
     - ["{{ cargo_home }}/bin/rustc", --version]
     - ["{{ cargo_home }}/bin/cargo", --version]
-    - ["{{ cargo_home }}/bin/bpf-linker", --version]
   become_user: "{{ primary_user }}"
   environment:
     CARGO_HOME: "{{ cargo_home }}"

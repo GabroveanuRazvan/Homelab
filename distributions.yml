@@ -1,0 +1,10 @@
+---
+- name: Show each host's operating system distribution
+  hosts: all
+  become: false
+  gather_facts: true
+
+  tasks:
+    - name: Print the Ansible distribution fact
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }}: {{ ansible_distribution }}"

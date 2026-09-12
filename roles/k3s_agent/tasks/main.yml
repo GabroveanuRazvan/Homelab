@@ -1,0 +1,32 @@
+---
+- name: Check whether the k3s agent service is installed
+  ansible.builtin.stat:
+    path: /etc/systemd/system/k3s-agent.service
+  register: k3s_agent_unit
+
+- name: Configure the k3s agent
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: /etc/rancher/k3s/config.yaml
+    owner: root
+    group: root
+    mode: "0600"
+  notify: Restart k3s agent
+  no_log: true
+
+- name: Install or upgrade the pinned k3s agent
+  ansible.builtin.command:
+    argv: ["{{ k3s_install_script_path }}"]
+  environment:
+    INSTALL_K3S_VERSION: "{{ k3s_version }}"
+    INSTALL_K3S_EXEC: agent
+  when: >-
+    k3s_version not in installed_k3s.stdout or
+    not k3s_agent_unit.stat.exists
+
+- name: Enable and start the k3s agent
+  ansible.builtin.systemd_service:
+    name: "{{ k3s_agent_service_name }}"
+    enabled: true
+    state: started
+    daemon_reload: true

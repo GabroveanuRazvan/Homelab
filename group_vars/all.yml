@@ -6,6 +6,7 @@ install_ebpf_tools: true
 install_go: true
 install_rust: true
 install_docker: true
+install_kubectl: true
 install_vnc: true
 
 go_version: "1.26.5"
@@ -14,7 +15,16 @@ go_checksums:
   amd64: "5c2c3b16caefa1d968a94c1daca04a7ca301a496d9b086e17ad77bb81393f053"
   arm64: "fe4789e92b1f33358680864bbe8704289e7bb5fc207d80623c308935bd696d49"
 bpf2go_version: "v0.22.0"
-bpf_linker_version: "0.11.0"
+
+# kubectl follows a minor release channel and receives patch updates from apt.
+kubernetes_minor_version: "v1.36"
+
+# k3s is intentionally managed by k3s.yml, not provision.yml.
+k3s_version: "v1.36.4+k3s1"
+k3s_api_port: 6443
+k3s_kubeconfig_group: "{{ primary_user }}"
+k3s_server_extra_config: {}
+k3s_agent_extra_config: {}
 
 # TigerVNC provides an independent X11 desktop on display :1 / TCP 5901.
 install_desktop_environment: false

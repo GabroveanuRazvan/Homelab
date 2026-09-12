@@ -1,0 +1,44 @@
+---
+- name: Check whether the k3s server service is installed
+  ansible.builtin.stat:
+    path: /etc/systemd/system/k3s.service
+  register: k3s_server_unit
+
+- name: Configure the k3s server
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: /etc/rancher/k3s/config.yaml
+    owner: root
+    group: root
+    mode: "0600"
+  notify: Restart k3s server
+  no_log: true
+
+- name: Install or upgrade the pinned k3s server
+  ansible.builtin.command:
+    argv: ["{{ k3s_install_script_path }}"]
+  environment:
+    INSTALL_K3S_VERSION: "{{ k3s_version }}"
+    INSTALL_K3S_EXEC: server
+  when: >-
+    k3s_version not in installed_k3s.stdout or
+    not k3s_server_unit.stat.exists
+
+- name: Enable and start the k3s server
+  ansible.builtin.systemd_service:
+    name: "{{ k3s_server_service_name }}"
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Make the k3s kubeconfig discoverable for the primary user
+  ansible.builtin.copy:
+    dest: /etc/profile.d/k3s.sh
+    content: |
+      # Managed by Ansible
+      if [ "${USER:-}" = "{{ primary_user }}" ]; then
+        export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+      fi
+    owner: root
+    group: root
+    mode: "0644"
