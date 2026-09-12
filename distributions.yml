@@ -1,10 +1,42 @@
 ---
-- name: Show each host's operating system distribution
+- name: Show each host's k3s platform facts
   hosts: all
   become: false
   gather_facts: true
 
   tasks:
-    - name: Print the Ansible distribution fact
+    - name: Read the available cgroup v2 controllers
+      ansible.builtin.slurp:
+        src: /sys/fs/cgroup/cgroup.controllers
+      register: distribution_cgroup_v2_controllers
+      failed_when: false
+      changed_when: false
+      check_mode: false
+
+    - name: Check for the legacy cgroup v1 memory controller
+      ansible.builtin.stat:
+        path: /sys/fs/cgroup/memory
+      register: distribution_cgroup_v1_memory
+
+    - name: Record whether the memory cgroup controller is available
+      ansible.builtin.set_fact:
+        distribution_memory_cgroup_available: >-
+          {{
+            'memory' in
+            ((distribution_cgroup_v2_controllers.content |
+              default('') | b64decode).split())
+            or distribution_cgroup_v1_memory.stat.isdir | default(false)
+          }}
+
+    - name: Print the k3s platform facts
       ansible.builtin.debug:
-        msg: "{{ inventory_hostname }}: {{ ansible_distribution }}"
+        msg:
+          host: "{{ inventory_hostname }}"
+          distribution: "{{ ansible_distribution }}"
+          distribution_version: "{{ ansible_distribution_version }}"
+          distribution_release: "{{ ansible_distribution_release }}"
+          os_family: "{{ ansible_os_family }}"
+          package_manager: "{{ ansible_pkg_mgr }}"
+          service_manager: "{{ ansible_service_mgr }}"
+          architecture: "{{ ansible_architecture }}"
+          memory_cgroup_available: "{{ distribution_memory_cgroup_available }}"

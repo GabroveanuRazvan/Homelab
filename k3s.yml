@@ -27,12 +27,6 @@
   become: true
   gather_facts: true
 
-  pre_tasks:
-    - name: Check that the control plane is Ubuntu
-      ansible.builtin.assert:
-        that: ansible_distribution == "Ubuntu"
-        fail_msg: "The k3s roles currently support Ubuntu only."
-
   roles:
     - k3s_common
     - k3s_server
@@ -65,12 +59,6 @@
   hosts: k3s_workers
   become: true
   gather_facts: true
-
-  pre_tasks:
-    - name: Check that the worker is Ubuntu
-      ansible.builtin.assert:
-        that: ansible_distribution == "Ubuntu"
-        fail_msg: "The k3s roles currently support Ubuntu only."
 
   roles:
     - k3s_common

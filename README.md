@@ -64,7 +64,8 @@ ansible-playbook provision.yml --check --diff
 ```
 
 `distributions.yml` only gathers facts and prints each reachable host's
-`ansible_distribution`; it does not install or change anything.
+distribution, OS family, package and service managers, architecture, and memory
+cgroup availability; it does not install or change anything.
 
 Provision every target, or only one host:
 
@@ -164,8 +165,9 @@ base roles. Use inventory variables to override versions or feature switches.
 ## k3s cluster bootstrap
 
 k3s remains separate from base provisioning. The initial implementation
-supports exactly one control-plane server and zero or more workers. Select the
-roles explicitly in `inventory.ini`:
+supports Debian-family hosts using apt and systemd on x86_64, aarch64, or
+armv7l, with exactly one control-plane server and zero or more workers. Select
+the roles explicitly in `inventory.ini`:
 
 ```ini
 [k3s_control_plane]
@@ -205,6 +207,11 @@ The token is not stored in inventory. k3s keeps it on the server and Ansible
 holds it in memory only long enough to render each worker's root-only
 `/etc/rancher/k3s/config.yaml`. The playbook is safe to rerun and also upgrades
 server and agent binaries when `k3s_version` changes.
+
+The common role verifies that the memory cgroup controller is available before
+installing k3s. If it is disabled on Raspberry Pi OS, append
+`cgroup_memory=1 cgroup_enable=memory` to `/boot/firmware/cmdline.txt` (or
+`/boot/cmdline.txt` on older releases), reboot, and rerun the playbook.
 
 Cluster settings are in `group_vars/all.yml`:
 

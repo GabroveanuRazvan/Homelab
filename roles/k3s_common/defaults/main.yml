@@ -1,4 +1,9 @@
 ---
+k3s_supported_architectures:
+  - x86_64
+  - aarch64
+  - armv7l
+
 k3s_install_script_path: /usr/local/src/k3s-install.sh
 k3s_install_script_url: >-
   https://raw.githubusercontent.com/k3s-io/k3s/{{ k3s_version | urlencode }}/install.sh
