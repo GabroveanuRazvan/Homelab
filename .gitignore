@@ -3,3 +3,7 @@
 vault-password*
 group_vars/**/vault.yml
 host_vars/**/vault.yml
+inventory.multipass.ini
+inventory.multipass.ini.*
+.multipass_known_hosts
+.multipass-cloud-init.*

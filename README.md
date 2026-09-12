@@ -213,6 +213,32 @@ installing k3s. If it is disabled on Raspberry Pi OS, append
 `cgroup_memory=1 cgroup_enable=memory` to `/boot/firmware/cmdline.txt` (or
 `/boot/cmdline.txt` on older releases), reboot, and rerun the playbook.
 
+### Disposable Multipass test cluster
+
+Create three local Ubuntu 24.04 VMs (one server and two workers) and generate a
+dedicated Ansible inventory with:
+
+```bash
+./scripts/multipass-lab.py create
+ansible-playbook -i inventory.multipass.ini distributions.yml
+ansible -i inventory.multipass.ini k3s_cluster -m ping
+ansible-playbook -i inventory.multipass.ini k3s.yml
+```
+
+The script reuses the key recorded in an existing generated inventory, then
+falls back to `~/.ssh/id_ed25519` or `~/.ssh/id_rsa`. Select another key pair by
+setting `MULTIPASS_LAB_SSH_KEY` to the private key path. Existing lab instances
+are started and reused. Inspect or permanently remove the three specifically
+named instances with:
+
+```bash
+./scripts/multipass-lab.py status
+./scripts/multipass-lab.py destroy
+```
+
+The generated inventory and its isolated SSH known-hosts file are ignored by
+Git. The normal `inventory.ini` and physical homelab hosts are never targeted.
+
 Cluster settings are in `group_vars/all.yml`:
 
 ```yaml
