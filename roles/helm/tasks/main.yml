@@ -1,0 +1,66 @@
+---
+- name: Install Helm repository prerequisites
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - gnupg
+    state: present
+
+- name: Create the apt keyring directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Install the Helm repository signing key
+  ansible.builtin.get_url:
+    url: "{{ helm_apt_key_url }}"
+    dest: "{{ helm_apt_key_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Read the Helm repository signing-key fingerprint
+  ansible.builtin.command:
+    argv:
+      - gpg
+      - --batch
+      - --show-keys
+      - --with-colons
+      - "{{ helm_apt_key_path }}"
+  register: helm_apt_key_details
+  changed_when: false
+
+- name: Validate the Helm repository signing key
+  ansible.builtin.assert:
+    that:
+      - helm_apt_key_fingerprint in helm_apt_key_details.stdout
+    fail_msg: >-
+      The downloaded Helm repository key does not match the expected
+      fingerprint {{ helm_apt_key_fingerprint }}.
+
+- name: Configure the Helm apt repository
+  ansible.builtin.apt_repository:
+    repo: "{{ helm_apt_repository }}"
+    filename: helm
+    state: present
+    update_cache: true
+
+- name: Install Helm
+  ansible.builtin.apt:
+    name: helm
+    state: present
+
+- name: Add Helm completion to the primary user's zsh configuration
+  ansible.builtin.lineinfile:
+    path: "{{ primary_user_home }}/.zshrc"
+    line: source <(helm completion zsh)
+    insertafter: EOF
+  become_user: "{{ primary_user }}"
+
+- name: Verify Helm
+  ansible.builtin.command:
+    argv: [helm, version, --short]
+  changed_when: false

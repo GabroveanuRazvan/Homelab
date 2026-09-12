@@ -43,6 +43,13 @@
     name: kubectl
     state: present
 
+- name: Add kubectl completion to the primary user's zsh configuration
+  ansible.builtin.lineinfile:
+    path: "{{ primary_user_home }}/.zshrc"
+    line: source <(kubectl completion zsh)
+    insertafter: EOF
+  become_user: "{{ primary_user }}"
+
 - name: Verify kubectl
   ansible.builtin.command:
     argv: [kubectl, version, --client]

@@ -7,6 +7,7 @@ install_go: true
 install_rust: true
 install_docker: true
 install_kubectl: true
+install_helm: true
 install_vnc: true
 
 go_version: "1.26.5"

@@ -3,7 +3,8 @@
 This project turns a fresh Debian-family host into a reusable homelab
 development machine. It installs administration and networking tools, C/C++ build tools,
 an eBPF toolchain, pinned Go and Go eBPF tooling, Rust and Cargo, Docker
-Engine with Compose, kubectl, SSH, and optional TigerVNC remote desktop support.
+Engine with Compose, kubectl, Helm, SSH, and optional TigerVNC remote desktop
+support.
 
 Base provisioning deliberately does **not** install k3s, CUPS, applications,
 or firewall policy. k3s has its own cluster playbook so machines can be
@@ -105,7 +106,11 @@ ansible-playbook update.yml -e update_target_group=provision_targets
   appends the user to the `docker` group. Log out and back in before using
   Docker without sudo.
 - `kubectl` installs the Kubernetes client from the official versioned apt
-  repository. `kubernetes_minor_version` selects its minor release channel.
+  repository. `kubernetes_minor_version` selects its minor release channel, and
+  the role enables Zsh completion without replacing `.zshrc`.
+- `helm` installs the Helm client from its Debian/Ubuntu apt repository, checks
+  the repository key fingerprint, and enables Zsh completion without replacing
+  `.zshrc`.
 - `vnc` installs TigerVNC. It provides a separate X11 desktop, so it does not
   depend on whether the physical Ubuntu session uses X11 or Wayland.
 
@@ -156,6 +161,7 @@ go version && bpf2go -h
 rustc --version && cargo --version
 docker --version && docker compose version
 kubectl version --client
+helm version --short
 ```
 
 The roles use package state, checksums, `creates`, templates, and service state,
