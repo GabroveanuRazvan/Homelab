@@ -27,3 +27,8 @@ common_packages:
   - util-linux
   - wget
   - zip
+  - zsh
+
+oh_my_zsh_repository: https://github.com/ohmyzsh/ohmyzsh.git
+oh_my_zsh_version: master
+oh_my_zsh_directory: "{{ primary_user_home }}/.oh-my-zsh"

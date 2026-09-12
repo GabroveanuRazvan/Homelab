@@ -1,7 +1,7 @@
 # Ansible homelab provisioning
 
-This project turns a fresh Ubuntu host into a reusable homelab development
-machine. It installs administration and networking tools, C/C++ build tools,
+This project turns a fresh Debian-family host into a reusable homelab
+development machine. It installs administration and networking tools, C/C++ build tools,
 an eBPF toolchain, pinned Go and Go eBPF tooling, Rust and Cargo, Docker
 Engine with Compose, kubectl, SSH, and optional TigerVNC remote desktop support.
 
@@ -11,8 +11,9 @@ provisioned without automatically joining a cluster.
 
 ## Prerequisites
 
-The controller needs Ansible and SSH access to each target. The target must be
-Ubuntu and should have Python 3 and OpenSSH Server available. On a fresh host:
+The controller needs Ansible and SSH access to each target. The target must use
+the Debian OS family, apt, and systemd, and should have Python 3 and OpenSSH
+Server available. On a fresh host:
 
 ```bash
 ssh-copy-id razvan@192.168.50.20
@@ -85,19 +86,24 @@ ansible-playbook update.yml -e update_target_group=provision_targets
 ## Roles
 
 - `common` installs SSH, CLI, administration, networking, and debugging tools.
-  It installs UFW but does not activate or configure firewall policy.
+  It also installs Oh My Zsh for the primary user, preserves an existing
+  `.zshrc`, and adds `alias ip="ip -color=auto"` only when absent. It installs
+  UFW but does not activate or configure firewall policy.
 - `development` installs compilers, build systems, autotools, and GDB.
 - `ebpf` installs Clang, LLVM, libbpf, bpftool, ELF/zlib development libraries,
   and headers matching `ansible_kernel`. Missing matching headers fail with an
   actionable message.
 - `golang` downloads the checksum-verified upstream archive into
   `/usr/local/go`. It installs pinned `bpf2go` as the normal user under
-  `~/go/bin`; profile snippets expose both paths.
+  `~/go/bin`; profile snippets and an idempotent `.zshrc` block expose both
+  paths.
 - `rust` installs rustup, stable Rust, Cargo, rustfmt, and clippy for the normal
-  user under `~/.cargo` and `~/.rustup`.
-- `docker` uses Docker's official signed Ubuntu apt repository, enables the
-  engine, installs Buildx and Compose, and appends the user to the `docker`
-  group. Log out and back in before using Docker without sudo.
+  user under `~/.cargo` and `~/.rustup`. An idempotent `.zshrc` block exposes
+  Cargo and installed Rust tools to interactive Zsh sessions.
+- `docker` uses Docker's official signed apt repository for the detected Ubuntu
+  or Debian distribution, enables the engine, installs Buildx and Compose, and
+  appends the user to the `docker` group. Log out and back in before using
+  Docker without sudo.
 - `kubectl` installs the Kubernetes client from the official versioned apt
   repository. `kubernetes_minor_version` selects its minor release channel.
 - `vnc` installs TigerVNC. It provides a separate X11 desktop, so it does not
@@ -271,8 +277,8 @@ endpoint, quorum, backup, and upgrade decisions.
   copy the public key again, and inspect `ssh -v` output.
 - A sudo password prompt or `Missing sudo password`: validate the sudoers
   drop-in with `sudo visudo -c` and test `sudo -n true` on the target.
-- Missing kernel headers: enable the appropriate Ubuntu repositories, update
-  packages, reboot into the installed Ubuntu kernel, and provision again.
+- Missing kernel headers: enable the appropriate distribution repositories,
+  update packages, reboot into the installed kernel, and provision again.
 - Docker permission denied: start a new login session after group membership
   changes; confirm with `id` that `docker` is listed.
 - VNC exits immediately: inspect `journalctl -u homelab-vnc`; on a server with

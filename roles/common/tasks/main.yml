@@ -11,3 +11,63 @@
     name: ssh
     state: started
     enabled: true
+
+- name: Install Oh My Zsh for the primary user
+  ansible.builtin.git:
+    repo: "{{ oh_my_zsh_repository }}"
+    dest: "{{ oh_my_zsh_directory }}"
+    version: "{{ oh_my_zsh_version }}"
+    depth: 1
+    update: false
+  become_user: "{{ primary_user }}"
+  environment:
+    HOME: "{{ primary_user_home }}"
+
+- name: Check whether the primary user has a zsh configuration
+  ansible.builtin.stat:
+    path: "{{ primary_user_home }}/.zshrc"
+  register: primary_user_zshrc
+  become_user: "{{ primary_user }}"
+
+- name: Create the standard Oh My Zsh configuration when none exists
+  ansible.builtin.copy:
+    src: "{{ oh_my_zsh_directory }}/templates/zshrc.zsh-template"
+    dest: "{{ primary_user_home }}/.zshrc"
+    remote_src: true
+    mode: "0644"
+  become_user: "{{ primary_user }}"
+  when: not primary_user_zshrc.stat.exists
+
+- name: Check whether the existing zsh configuration activates Oh My Zsh
+  ansible.builtin.command:
+    argv:
+      - grep
+      - -Eq
+      - '^[[:space:]]*(source|\.)[[:space:]].*oh-my-zsh\.sh'
+      - "{{ primary_user_home }}/.zshrc"
+  register: primary_user_oh_my_zsh_activation
+  become_user: "{{ primary_user }}"
+  changed_when: false
+  failed_when: primary_user_oh_my_zsh_activation.rc not in [0, 1]
+
+- name: Activate Oh My Zsh without replacing the existing configuration
+  ansible.builtin.blockinfile:
+    path: "{{ primary_user_home }}/.zshrc"
+    marker: "# {mark} ANSIBLE MANAGED OH MY ZSH"
+    block: |
+      export ZSH="${ZSH:-$HOME/.oh-my-zsh}"
+      source "$ZSH/oh-my-zsh.sh"
+  become_user: "{{ primary_user }}"
+  when: primary_user_oh_my_zsh_activation.rc == 1
+
+- name: Add the colored ip command alias without replacing zsh configuration
+  ansible.builtin.lineinfile:
+    path: "{{ primary_user_home }}/.zshrc"
+    line: 'alias ip="ip -color=auto"'
+    insertafter: EOF
+  become_user: "{{ primary_user }}"
+
+- name: Use zsh as the primary user's login shell
+  ansible.builtin.user:
+    name: "{{ primary_user }}"
+    shell: /usr/bin/zsh

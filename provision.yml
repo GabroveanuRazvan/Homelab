@@ -5,13 +5,17 @@
   gather_facts: true
 
   pre_tasks:
-    - name: Check that the target is Ubuntu
+    - name: Validate the provisioning host platform
       ansible.builtin.assert:
         that:
-          - ansible_distribution == "Ubuntu"
+          - ansible_os_family == "Debian"
+          - ansible_pkg_mgr == "apt"
+          - ansible_service_mgr == "systemd"
         fail_msg: >-
-          This provisioning playbook supports Ubuntu only; detected
-          {{ ansible_distribution }} {{ ansible_distribution_version }}.
+          Unsupported provisioning platform: {{ ansible_distribution }}
+          {{ ansible_distribution_version }}, package manager
+          {{ ansible_pkg_mgr }}, service manager {{ ansible_service_mgr }}.
+          This playbook supports Debian-family systems using apt and systemd.
 
     - name: Read the primary user's account information
       ansible.builtin.getent:

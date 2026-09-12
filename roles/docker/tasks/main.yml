@@ -21,7 +21,7 @@
 
 - name: Install Docker's official repository signing key
   ansible.builtin.get_url:
-    url: https://download.docker.com/linux/ubuntu/gpg
+    url: "{{ docker_apt_repository_url }}/gpg"
     dest: /etc/apt/keyrings/docker.asc
     owner: root
     group: root
@@ -32,7 +32,7 @@
     repo: >-
       deb [arch={{ docker_apt_architectures[ansible_architecture] }}
       signed-by=/etc/apt/keyrings/docker.asc]
-      https://download.docker.com/linux/ubuntu
+      {{ docker_apt_repository_url }}
       {{ ansible_distribution_release }} stable
     filename: docker
     state: present

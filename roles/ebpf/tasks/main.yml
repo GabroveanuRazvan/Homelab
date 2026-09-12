@@ -10,9 +10,10 @@
       ansible.builtin.fail:
         msg: >-
           Could not install the eBPF toolchain or headers for the running kernel
-          (linux-headers-{{ ansible_kernel }}). Ensure the matching Ubuntu repository
-          is enabled and reboot into a supported Ubuntu kernel, then rerun the
-          playbook. apt said: {{ ansible_failed_result.msg | default('no details returned') }}
+          (linux-headers-{{ ansible_kernel }}). Ensure the matching distribution
+          repository is enabled and reboot into a supported kernel, then rerun
+          the playbook. apt said:
+          {{ ansible_failed_result.msg | default('no details returned') }}
 
 - name: Verify installed eBPF commands
   ansible.builtin.command:

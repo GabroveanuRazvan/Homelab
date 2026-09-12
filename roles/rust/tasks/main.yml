@@ -61,6 +61,14 @@
     group: root
     mode: "0644"
 
+- name: Add Cargo binaries to the primary user's zsh PATH
+  ansible.builtin.blockinfile:
+    path: "{{ primary_user_home }}/.zshrc"
+    marker: "# {mark} ANSIBLE MANAGED CARGO PATH"
+    block: |
+      export PATH="{{ cargo_home }}/bin:$PATH"
+  become_user: "{{ primary_user }}"
+
 - name: Verify Rust and Cargo
   ansible.builtin.command:
     argv: "{{ item }}"

@@ -1,9 +1,8 @@
 ---
 ebpf_packages:
   - clang
+  - "{{ 'linux-tools-common' if ansible_distribution == 'Ubuntu' else 'bpftool' }}"
   - libbpf-dev
   - libelf-dev
   - llvm
-  # Ubuntu's linux-tools-common provides the virtual bpftool package.
-  - linux-tools-common
   - zlib1g-dev

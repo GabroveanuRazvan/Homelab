@@ -70,6 +70,14 @@
     group: root
     mode: "0644"
 
+- name: Add Go binaries to the primary user's zsh PATH
+  ansible.builtin.blockinfile:
+    path: "{{ primary_user_home }}/.zshrc"
+    marker: "# {mark} ANSIBLE MANAGED GO PATH"
+    block: |
+      export PATH="/usr/local/go/bin:{{ go_bin_directory }}:$PATH"
+  become_user: "{{ primary_user }}"
+
 - name: Read the installed bpf2go version marker
   ansible.builtin.slurp:
     src: "{{ go_bin_directory }}/.bpf2go-version"
