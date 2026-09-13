@@ -1,0 +1,23 @@
+---
+services:
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    container_name: jellyfin
+    environment:
+      - PUID=1026
+      - PGID=1000
+      - TZ=Etc/UTC
+      - JELLYFIN_PublishedServerUrl=http://nas.home #optional
+    volumes:
+      - /volume1/docker/jellyfin/config:/config
+      - /volume1/docker/media/jellyfin/TV:/data/TV
+      - /volume1/docker/media/jellyfin/Movies:/data/Movies
+
+      - /volume2/media/jellyfin/TV:/data/TV2
+      - /volume2/media/jellyfin/Movies:/data/Movies2
+    ports:
+      - 8096:8096 # web ui http
+      #- 8920:8920 #optional https
+      - 7359:7359/udp #optional auto-discovery
+      #- 1900:1900/udp #optional dlna
+    restart: unless-stopped
