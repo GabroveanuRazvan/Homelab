@@ -41,5 +41,3 @@
       when: install_kubectl | bool
     - role: helm
       when: install_helm | bool
-    - role: vnc
-      when: install_vnc | bool

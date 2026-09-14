@@ -1,8 +1,0 @@
----
-vnc_packages:
-  - dbus-x11
-  - tigervnc-standalone-server
-  - tigervnc-tools
-vnc_desktop_packages:
-  - xfce4
-  - xfce4-goodies

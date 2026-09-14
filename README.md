@@ -3,8 +3,7 @@
 This project turns a fresh Debian-family host into a reusable homelab
 development machine. It installs administration and networking tools, C/C++ build tools,
 an eBPF toolchain, pinned Go and Go eBPF tooling, Rust and Cargo, Docker
-Engine with Compose, kubectl, Helm, SSH, and optional TigerVNC remote desktop
-support.
+Engine with Compose, kubectl, Helm, and SSH.
 
 Base provisioning deliberately does **not** install k3s, CUPS, applications,
 or firewall policy. k3s has its own cluster playbook so machines can be
@@ -52,10 +51,9 @@ mini_pcs
 ansible_user=razvan
 ```
 
-Feature switches and pinned versions live in `group_vars/all.yml`. Host- or
-group-specific files can override them. The architecture defaults to `amd64`;
-set `go_arch: arm64` for an `aarch64` target. Both official checksums are
-included.
+Feature switches and pinned versions live in `group_vars/all/main.yml`.
+Host- or group-specific files can override them. The Go download architecture
+is derived from each host, and checksums for amd64 and arm64 are included.
 
 Test connectivity and inspect changes first:
 
@@ -111,41 +109,6 @@ ansible-playbook update.yml -e update_target_group=provision_targets
 - `helm` installs the Helm client from its Debian/Ubuntu apt repository, checks
   the repository key fingerprint, and enables Zsh completion without replacing
   `.zshrc`.
-- `vnc` installs TigerVNC. It provides a separate X11 desktop, so it does not
-  depend on whether the physical Ubuntu session uses X11 or Wayland.
-
-## VNC bootstrap and access
-
-The default VNC session is display `:1`, TCP port `5901`. No VNC password is
-stored in this repository. After the first provisioning run, log into the host
-as the primary user and initialize it interactively:
-
-```bash
-tigervncpasswd ~/.vnc/passwd
-```
-
-Rerun `provision.yml`; Ansible will secure the password file and enable
-`homelab-vnc.service`. On Ubuntu Server, set this before provisioning so the
-role installs XFCE:
-
-```yaml
-install_desktop_environment: true
-```
-
-With its secure default, TigerVNC listens only on loopback. Connect through an
-SSH tunnel (or change `vnc_localhost_only` only when a trusted LAN/VPN and its
-firewall policy are in place):
-
-```bash
-ssh -L 5901:localhost:5901 razvan@192.168.50.20
-```
-
-Then point Remmina at `localhost:5901`. Check the service with:
-
-```bash
-systemctl status homelab-vnc
-ss -lntp | grep 5901
-```
 
 ## Verification
 
@@ -251,7 +214,7 @@ named instances with:
 The generated inventory and its isolated SSH known-hosts file are ignored by
 Git. The normal `inventory.ini` and physical homelab hosts are never targeted.
 
-Cluster settings are in `group_vars/all.yml`:
+Cluster settings are in `group_vars/all/main.yml`:
 
 ```yaml
 k3s_version: "v1.36.4+k3s1"
@@ -287,8 +250,6 @@ endpoint, quorum, backup, and upgrade decisions.
   update packages, reboot into the installed kernel, and provision again.
 - Docker permission denied: start a new login session after group membership
   changes; confirm with `id` that `docker` is listed.
-- VNC exits immediately: inspect `journalctl -u homelab-vnc`; on a server with
-  no desktop, enable `install_desktop_environment` and rerun the playbook.
 - k3s API timeout: verify the controller and workers can reach the control-plane
   address on TCP `6443`, and check `journalctl -u k3s` on the server.
 - A worker does not join: check `journalctl -u k3s-agent` on that worker and
