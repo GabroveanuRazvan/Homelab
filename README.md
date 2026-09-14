@@ -225,8 +225,9 @@ k3s_agent_extra_config: {}
 
 The server kubeconfig remains at `/etc/rancher/k3s/k3s.yaml`, mode `0640`, and
 is readable by `k3s_kubeconfig_group` (the primary user's group by default).
-After logging in again, the profile sets `KUBECONFIG` automatically. To use it
-immediately in the current shell:
+The server role adds `KUBECONFIG` to the primary user's `.zshrc` and also
+publishes it through `/etc/profile.d/k3s.sh`. Open a new shell after the first
+run, or load the profile immediately in the current shell:
 
 ```bash
 source /etc/profile.d/k3s.sh

@@ -31,6 +31,15 @@
     state: started
     daemon_reload: true
 
+- name: Read the primary user's account information
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ primary_user }}"
+
+- name: Record the primary user's home directory for k3s
+  ansible.builtin.set_fact:
+    k3s_primary_user_home: "{{ ansible_facts.getent_passwd[primary_user][4] }}"
+
 - name: Make the k3s kubeconfig discoverable for the primary user
   ansible.builtin.copy:
     dest: /etc/profile.d/k3s.sh
@@ -42,3 +51,12 @@
     owner: root
     group: root
     mode: "0644"
+
+- name: Add the k3s kubeconfig to the primary user's zsh environment
+  ansible.builtin.lineinfile:
+    path: "{{ k3s_primary_user_home }}/.zshrc"
+    line: export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+    insertafter: EOF
+    create: true
+    mode: "0644"
+  become_user: "{{ primary_user }}"
