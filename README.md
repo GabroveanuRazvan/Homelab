@@ -1,9 +1,20 @@
-# Ansible homelab provisioning
+# Homelab control plane
 
-This project turns a fresh Debian-family host into a reusable homelab
-development machine. It installs administration and networking tools, C/C++ build tools,
-an eBPF toolchain, pinned Go and Go eBPF tooling, Rust and Cargo, Docker
-Engine with Compose, kubectl, Helm, and SSH.
+This repository is the source of truth for managing the homelab. Ansible
+provisions the hosts and bootstraps k3s; Docker Compose files live alongside
+it, with Helm charts and Kubernetes resources intended to follow.
+
+## Repository layout
+
+- `ansible/` contains inventories, playbooks, variables, roles, and its local
+  Ansible configuration.
+- `docker/` contains standalone Docker Compose workloads.
+- `scripts/` contains local helpers such as the disposable Multipass lab.
+
+The provisioning playbooks turn a fresh Debian-family host into a reusable
+homelab development machine. They install administration and networking tools,
+C/C++ build tools, an eBPF toolchain, pinned Go and Go eBPF tooling, Rust and
+Cargo, Docker Engine with Compose, kubectl, Helm, and SSH.
 
 Base provisioning deliberately does **not** install k3s, CUPS, applications,
 or firewall policy. k3s has its own cluster playbook so machines can be
@@ -32,9 +43,9 @@ Passwordless sudo lets unattended, `become: true` tasks run without
 
 ## Inventory and variables
 
-Edit `inventory.ini`, uncomment a host, and replace its example address. The
-playbook targets the reusable `provision_targets` group, never a hardcoded host.
-For example:
+Edit `ansible/inventory.ini`, uncomment a host, and replace its example
+address. The playbook targets the reusable `provision_targets` group, never a
+hardcoded host. For example:
 
 ```ini
 [mini_pcs]
@@ -43,21 +54,19 @@ mini-pc ansible_host=192.168.50.20
 [provision_targets:children]
 mini_pcs
 
-
-
-
-
 [all:vars]
 ansible_user=razvan
 ```
 
-Feature switches and pinned versions live in `group_vars/all/main.yml`.
+Feature switches and pinned versions live in `ansible/group_vars/all/main.yml`.
 Host- or group-specific files can override them. The Go download architecture
 is derived from each host, and checksums for amd64 and arm64 are included.
 
-Test connectivity and inspect changes first:
+Run Ansible commands from the `ansible/` directory so its `ansible.cfg` is
+loaded. Test connectivity and inspect changes first:
 
 ```bash
+cd ansible
 ansible all -m ping
 ansible-playbook distributions.yml
 ansible-playbook provision.yml --check --diff
@@ -142,7 +151,7 @@ base roles. Use inventory variables to override versions or feature switches.
 k3s remains separate from base provisioning. The initial implementation
 supports Debian-family hosts using apt and systemd on x86_64, aarch64, or
 armv7l, with exactly one control-plane server and zero or more workers. Select
-the roles explicitly in `inventory.ini`:
+the roles explicitly in `ansible/inventory.ini`:
 
 ```ini
 [k3s_control_plane]
@@ -195,9 +204,9 @@ dedicated Ansible inventory with:
 
 ```bash
 ./scripts/multipass-lab.py create
-ansible-playbook -i inventory.multipass.ini distributions.yml
-ansible -i inventory.multipass.ini k3s_cluster -m ping
-ansible-playbook -i inventory.multipass.ini k3s.yml
+ansible-playbook -i ansible/inventory.multipass.ini ansible/distributions.yml
+ansible -i ansible/inventory.multipass.ini k3s_cluster -m ping
+ansible-playbook -i ansible/inventory.multipass.ini ansible/k3s.yml
 ```
 
 The script reuses the key recorded in an existing generated inventory, then
@@ -211,10 +220,11 @@ named instances with:
 ./scripts/multipass-lab.py destroy
 ```
 
-The generated inventory and its isolated SSH known-hosts file are ignored by
-Git. The normal `inventory.ini` and physical homelab hosts are never targeted.
+The generated inventory and its isolated SSH known-hosts file are written under
+`ansible/` and ignored by Git. The normal `ansible/inventory.ini` and physical
+homelab hosts are never targeted.
 
-Cluster settings are in `group_vars/all/main.yml`:
+Cluster settings are in `ansible/group_vars/all/main.yml`:
 
 ```yaml
 k3s_version: "v1.36.4+k3s1"

@@ -19,8 +19,9 @@ from typing import Iterator, Sequence
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = SCRIPT_DIR.parent
-INVENTORY_FILE = PROJECT_DIR / "inventory.multipass.ini"
-KNOWN_HOSTS_FILE = PROJECT_DIR / ".multipass_known_hosts"
+ANSIBLE_DIR = PROJECT_DIR / "ansible"
+INVENTORY_FILE = ANSIBLE_DIR / "inventory.multipass.ini"
+KNOWN_HOSTS_FILE = ANSIBLE_DIR / ".multipass_known_hosts"
 MULTIPASS_IMAGE = os.environ.get("MULTIPASS_LAB_IMAGE", "24.04")
 
 
@@ -267,7 +268,7 @@ ansible_ssh_common_args='{ssh_common_args}'
 """
 
     descriptor, temporary_name = tempfile.mkstemp(
-        prefix="inventory.multipass.ini.", dir=PROJECT_DIR
+        prefix="inventory.multipass.ini.", dir=ANSIBLE_DIR
     )
     temporary_path = Path(temporary_name)
     try:
@@ -292,9 +293,10 @@ def create_lab() -> None:
 
     print(
         "\nLab ready. Test it with:\n"
-        f"  ansible-playbook -i {INVENTORY_FILE} distributions.yml\n"
+        f"  ansible-playbook -i {INVENTORY_FILE} "
+        f"{ANSIBLE_DIR / 'distributions.yml'}\n"
         f"  ansible -i {INVENTORY_FILE} k3s_cluster -m ping\n"
-        f"  ansible-playbook -i {INVENTORY_FILE} k3s.yml"
+        f"  ansible-playbook -i {INVENTORY_FILE} {ANSIBLE_DIR / 'k3s.yml'}"
     )
 
 
