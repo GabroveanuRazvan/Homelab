@@ -15,6 +15,7 @@ common_packages:
   - lsof
   - net-tools
   - netcat-openbsd
+  - nfs-common
   - openssh-server
   - rsync
   - strace

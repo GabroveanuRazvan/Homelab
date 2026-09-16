@@ -10,6 +10,7 @@ it, with Helm charts and Kubernetes resources intended to follow.
   Ansible configuration.
 - `docker/` contains standalone Docker Compose workloads.
 - `scripts/` contains local helpers such as the disposable Multipass lab.
+- `COMMANDS.md` is an evolving cheat sheet of useful homelab CLI commands.
 
 The provisioning playbooks turn a fresh Debian-family host into a reusable
 homelab development machine. They install administration and networking tools,
@@ -93,10 +94,11 @@ ansible-playbook update.yml -e update_target_group=provision_targets
 
 ## Roles
 
-- `common` installs SSH, CLI, administration, networking, and debugging tools.
-  It also installs Oh My Zsh for the primary user, preserves an existing
-  `.zshrc`, and adds `alias ip="ip -color=auto"` only when absent. It installs
-  UFW but does not activate or configure firewall policy.
+- `common` installs SSH, CLI, administration, networking, debugging, and the
+  `nfs-common` client tools required for mounting NFS-backed Kubernetes
+  volumes. It also installs Oh My Zsh for the primary user, preserves an
+  existing `.zshrc`, and adds `alias ip="ip -color=auto"` only when absent. It
+  installs UFW but does not activate or configure firewall policy.
 - `development` installs compilers, build systems, autotools, and GDB.
 - `ebpf` installs Clang, LLVM, libbpf, bpftool, ELF/zlib development libraries,
   and headers matching `ansible_kernel`. Missing matching headers fail with an

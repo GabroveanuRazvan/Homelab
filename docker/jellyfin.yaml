@@ -15,6 +15,9 @@ services:
 
       - /volume2/media/jellyfin/TV:/data/TV2
       - /volume2/media/jellyfin/Movies:/data/Movies2
+
+      - /volume3/media3/jellyfin/TV:/data/TV3
+      - /volume3/media3/jellyfin/Movies:/data/Movies3
     ports:
       - 8096:8096 # web ui http
       #- 8920:8920 #optional https
