@@ -1,0 +1,6 @@
+---
+# Argo CD terminates TLS at Traefik, so its service accepts HTTP and h2c from
+# inside the cluster. Traefik still exposes the UI externally over HTTPS.
+configs:
+  params:
+    server.insecure: true

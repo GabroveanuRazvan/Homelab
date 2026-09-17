@@ -8,9 +8,13 @@ it, with Helm charts and Kubernetes resources intended to follow.
 
 - `ansible/` contains inventories, playbooks, variables, roles, and its local
   Ansible configuration.
+- `argo/` contains Kubernetes resources reconciled by Argo CD.
+- `bootstrap/` contains the one-time root Argo CD Application manifest.
 - `docker/` contains standalone Docker Compose workloads.
+- `helm/` contains values for charts installed outside Ansible.
 - `scripts/` contains local helpers such as the disposable Multipass lab.
 - `COMMANDS.md` is an evolving cheat sheet of useful homelab CLI commands.
+- `ARGOCD.md` documents the manual Helm-to-GitOps bootstrap workflow.
 
 The provisioning playbooks turn a fresh Debian-family host into a reusable
 homelab development machine. They install administration and networking tools,
