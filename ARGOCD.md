@@ -73,16 +73,23 @@ control-plane address:
 192.168.50.215 argocd.home
 ```
 
-For a one-off test that does not require changing DNS or `/etc/hosts`:
+Verify that the DNS record resolves and test the HTTP route:
 
 ```bash
-curl --insecure \
-  --resolve argocd.home:443:192.168.50.215 \
-  https://argocd.home/
+getent hosts argocd.home
+curl http://argocd.home/
 ```
 
-Then open `https://argocd.home` in a browser. Traefik uses its default
-certificate, so a certificate warning is expected in this first iteration.
+Then open `http://argocd.home/` in a browser. This homelab route intentionally
+uses plain HTTP and is only intended to be reachable from the trusted LAN.
+
+Log in with the Argo CD CLI through Traefik using gRPC-Web over plain HTTP:
+
+```bash
+argocd login argocd.home:80 \
+  --grpc-web \
+  --plaintext
+```
 
 The username is `admin`. Retrieve the initial password with:
 
@@ -92,8 +99,7 @@ kubectl --namespace argocd get secret argocd-initial-admin-secret \
 echo
 ```
 
-Change the password after the first login. Later, add a trusted certificate
-with cert-manager instead of relying on Traefik's default certificate.
+Change the password after the first login.
 
 ## Remove the Helm installation
 
