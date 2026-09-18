@@ -4,6 +4,14 @@ kind: IngressRoute
 metadata:
   name: argocd-server
   namespace: argocd
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Argo CD
+    gethomepage.dev/description: Kubernetes GitOps
+    gethomepage.dev/group: Infrastructure
+    gethomepage.dev/icon: argocd.png
+    gethomepage.dev/href: http://argocd.home/
+    gethomepage.dev/app: argocd-server
 spec:
   entryPoints:
     - web
