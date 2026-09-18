@@ -51,6 +51,10 @@ data:
             icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/asus.png
             href: http://192.168.50.1/
             description: Network router administration
+        - Synology NAS:
+            icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/synology-dsm.png
+            href: http://nas.home:5000/
+            description: Network attached storage administration
 
   bookmarks.yaml: "[]"
   docker.yaml: ""
