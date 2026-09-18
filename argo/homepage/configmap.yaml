@@ -47,6 +47,10 @@ data:
             icon: qbittorrent.png
             href: http://nas.home:9111/
             description: Torrent client
+        - ASUS Router:
+            icon: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/asus.png
+            href: http://192.168.50.1/
+            description: Network router administration
 
   bookmarks.yaml: "[]"
   docker.yaml: ""
