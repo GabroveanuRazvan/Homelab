@@ -37,10 +37,15 @@ data:
         provider: duckduckgo
         target: _blank
 
-  services.yaml: "[]"
+  services.yaml: |
+    - Infrastructure:
+        - Pi-hole:
+            icon: pi-hole.png
+            href: http://nas.home:12000/admin/
+            description: Network-wide DNS and ad blocking
+
   bookmarks.yaml: "[]"
   docker.yaml: ""
   proxmox.yaml: ""
   custom.css: ""
   custom.js: ""
-
