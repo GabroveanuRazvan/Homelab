@@ -28,6 +28,7 @@ Current HTTP routes:
 - `http://traefik.home/dashboard/`
 - `http://homepage.home/`
 - `http://grafana.home/`
+- `http://prometheus.home/`
 
 The Homepage instance uses read-only Kubernetes permissions to discover
 annotated Ingress and Traefik IngressRoute resources. Add `homepage.home` to
