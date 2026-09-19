@@ -1,11 +1,24 @@
 # Argo-managed homelab resources
 
-The `homelab` Argo CD Application recursively watches this directory on the
-`main` branch. Kubernetes manifests committed and pushed here are reconciled
-automatically into the cluster.
+The repository uses the App-of-Apps pattern. The root `homelab` Application
+watches `argo/applications/` and reconciles the child Argo CD Applications
+defined there. Each child Application then watches its own directory under
+`argo/workloads/`.
 
-Traefik routes are kept together in `traefik/`. Application resources are
-grouped by application, such as the Homepage deployment under `homepage/`.
+Current Applications:
+
+- `homepage` watches `argo/workloads/homepage/`.
+- `traefik-routes` watches `argo/workloads/traefik/`.
+
+The root Application is bootstrapped or updated explicitly because its
+manifest lives outside the directory it watches:
+
+```bash
+kubectl apply -f bootstrap/argocd/homelab.yaml
+```
+
+After the root exists, changes under `argo/applications/` and the child
+workload directories are reconciled from Git by Argo CD.
 
 Current HTTP routes:
 
