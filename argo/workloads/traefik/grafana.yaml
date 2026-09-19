@@ -1,0 +1,23 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: grafana
+  namespace: monitoring
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Grafana
+    gethomepage.dev/description: Cluster metrics and dashboards
+    gethomepage.dev/group: Infrastructure
+    gethomepage.dev/icon: grafana.png
+    gethomepage.dev/href: http://grafana.home/
+    gethomepage.dev/app: monitoring-grafana
+spec:
+  entryPoints:
+    - web
+  routes:
+    - kind: Rule
+      match: Host(`grafana.home`)
+      services:
+        - name: monitoring-grafana
+          port: 80

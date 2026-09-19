@@ -1,0 +1,80 @@
+---
+# K3s embeds these control-plane components instead of exposing the standard
+# endpoints expected by kube-prometheus-stack. Disable their ServiceMonitors
+# to avoid permanently-down targets and misleading alerts.
+kubeControllerManager:
+  enabled: false
+
+kubeEtcd:
+  enabled: false
+
+kubeProxy:
+  enabled: false
+
+kubeScheduler:
+  enabled: false
+
+# Alertmanager can be added after notification receivers have been selected.
+# Prometheus still evaluates and displays its alerting rules without it.
+alertmanager:
+  enabled: false
+
+grafana:
+  enabled: true
+  defaultDashboardsEnabled: true
+  defaultDashboardsTimezone: Europe/Bucharest
+  ingress:
+    enabled: false
+  nodeSelector:
+    kubernetes.io/hostname: mini-pc
+  persistence:
+    enabled: true
+    type: sts
+    storageClassName: local-path
+    accessModes:
+      - ReadWriteOnce
+    size: 2Gi
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  grafana.ini:
+    server:
+      domain: grafana.home
+      root_url: http://grafana.home/
+
+prometheusOperator:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+prometheus:
+  enabled: true
+  prometheusSpec:
+    nodeSelector:
+      kubernetes.io/hostname: mini-pc
+    retention: 7d
+    retentionSize: 8GB
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 2Gi
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: local-path
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 10Gi

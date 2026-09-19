@@ -9,6 +9,8 @@ Current Applications:
 
 - `homepage` watches `argo/workloads/homepage/`.
 - `traefik-routes` watches `argo/workloads/traefik/`.
+- `monitoring` renders the Prometheus Community `kube-prometheus-stack` Helm
+  chart with values stored in `argo/values/monitoring/`.
 
 The root Application is bootstrapped or updated explicitly because its
 manifest lives outside the directory it watches:
@@ -25,6 +27,7 @@ Current HTTP routes:
 - `http://argocd.home/`
 - `http://traefik.home/dashboard/`
 - `http://homepage.home/`
+- `http://grafana.home/`
 
 The Homepage instance uses read-only Kubernetes permissions to discover
 annotated Ingress and Traefik IngressRoute resources. Add `homepage.home` to
