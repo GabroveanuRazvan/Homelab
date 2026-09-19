@@ -4,7 +4,7 @@ set -euo pipefail
 
 readonly ARGOCD_NAMESPACE="argocd"
 readonly REPOSITORY_SECRET="homelab-git-repository"
-readonly REPOSITORY_URL="git@github.com:GabroveanuRazvan/Ansible-Playbooks.git"
+readonly REPOSITORY_URL="git@github.com:GabroveanuRazvan/Homelab.git"
 readonly REPOSITORY_KEY_PATH="${ARGOCD_REPOSITORY_KEY_PATH:-${HOME}/.ssh/argocd-homelab}"
 
 
@@ -17,6 +17,7 @@ kubectl create secret generic "${REPOSITORY_SECRET}" \
   --output=yaml |
 kubectl apply \
   --server-side \
+  --force-conflicts \
   --field-manager=argocd-repository-bootstrap \
   --filename=-
 

@@ -9,7 +9,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: git@github.com:GabroveanuRazvan/Ansible-Playbooks.git
+    repoURL: git@github.com:GabroveanuRazvan/Homelab.git
     targetRevision: main
     path: argo/applications
     directory:
