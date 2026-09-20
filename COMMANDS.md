@@ -55,6 +55,90 @@ ssh -i ~/.ssh/homelab_ansible razvan@mini-pc.home
 
 The `-i` option explicitly selects the private identity file.
 
+### Copy a file to another computer over SSH
+
+Use `scp` with a local source followed by a remote destination:
+
+```bash
+scp ./backup.zip razvan@mini-pc.home:/home/razvan/
+```
+
+The remote path syntax is `USER@HOST:PATH`. This example copies the local
+`backup.zip` into `/home/razvan/` on `mini-pc.home`. A destination ending in
+`/` must already be an existing directory.
+
+To choose a specific SSH private key:
+
+```bash
+scp -i ~/.ssh/homelab_ansible \
+  ./backup.zip \
+  razvan@mini-pc.home:/home/razvan/
+```
+
+### Copy a file from another computer
+
+Put the remote source first and the local destination second:
+
+```bash
+scp razvan@mini-pc.home:/home/razvan/backup.zip ./
+```
+
+Here, `./` means the current local directory.
+
+### Copy a directory recursively
+
+```bash
+scp -r ./configuration razvan@mini-pc.home:/home/razvan/
+```
+
+`-r` recursively copies the directory and everything beneath it.
+
+### Use a non-default SSH port
+
+```bash
+scp -P 2222 ./backup.zip razvan@mini-pc.home:/home/razvan/
+```
+
+For `scp`, the port option is uppercase `-P`. Lowercase `-p` has a different
+meaning: it preserves file modification times and permission modes.
+
+### Copy between two remote computers
+
+Run this from a third computer that can SSH into both hosts:
+
+```bash
+scp -3 \
+  user@source.home:/path/to/file \
+  user@destination.home:/path/to/directory/
+```
+
+`-3` routes the data through the computer running `scp`; the two remote hosts
+do not need to connect directly to each other.
+
+### Copy a large file with resumable progress
+
+`scp` cannot reliably resume an interrupted transfer. Use `rsync` over SSH for
+large files or directories:
+
+```bash
+rsync -avP -e ssh \
+  ./large-backup.zip \
+  razvan@mini-pc.home:/home/razvan/
+```
+
+- `-a` preserves common file metadata and recursively copies directories.
+- `-v` prints the files being transferred.
+- `-P` shows progress and keeps partially transferred files for resuming.
+- `-e ssh` selects SSH as the transport.
+
+Run the same command again after an interruption to continue the transfer.
+Quote paths containing spaces, for example:
+
+```bash
+scp "./Jellyfin Backup.zip" \
+  "razvan@mini-pc.home:/home/razvan/Jellyfin Backup.zip"
+```
+
 ### Tell Ansible to use the dedicated key
 
 Add this beneath `[all:vars]` in `ansible/inventory.ini`:
