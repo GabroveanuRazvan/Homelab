@@ -1,0 +1,117 @@
+---
+replicaCount: 1
+revisionHistoryLimit: 3
+
+fullnameOverride: jellyfin
+
+serviceAccount:
+  create: true
+  automount: false
+
+# Jellyfin uses an SQLite database and must not run multiple replicas against
+# the same configuration volume. Recreate also avoids overlapping upgrades.
+deploymentStrategy:
+  type: Recreate
+
+service:
+  type: ClusterIP
+  port: 8096
+  portName: http
+
+ingress:
+  enabled: false
+
+httpRoute:
+  enabled: false
+
+nodeSelector:
+  homelab.io/jellyfin: "true"
+
+podSecurityContext:
+  supplementalGroups:
+    - 44
+    - 992
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 1Gi
+  limits:
+    cpu: "4"
+    memory: 4Gi
+
+jellyfin:
+  enableDLNA: false
+  env:
+    - name: JELLYFIN_PublishedServerUrl
+      value: http://jellyfin.home
+    - name: TZ
+      value: Europe/Bucharest
+
+persistence:
+  config:
+    enabled: true
+    accessMode: ReadWriteOnce
+    size: 10Gi
+    storageClass: local-path
+  # The existing media exports are mounted below through their static PVCs.
+  media:
+    enabled: false
+  # Transcoding and other cache data stays on mini-pc's local NVMe storage and
+  # is safe to discard whenever the pod is replaced.
+  cache:
+    enabled: false
+
+volumes:
+  - name: media1
+    persistentVolumeClaim:
+      claimName: jellyfin-media1
+      readOnly: true
+  - name: media2
+    persistentVolumeClaim:
+      claimName: jellyfin-media2
+      readOnly: true
+  - name: media3
+    persistentVolumeClaim:
+      claimName: jellyfin-media3
+      readOnly: true
+  - name: dri
+    hostPath:
+      path: /dev/dri
+      type: Directory
+
+volumeMounts:
+  - name: media1
+    mountPath: /media/movies/media1
+    subPath: torrents/complete/movies
+    readOnly: true
+  - name: media1
+    mountPath: /media/tv/media1
+    subPath: torrents/complete/tv
+    readOnly: true
+  - name: media2
+    mountPath: /media/movies/media2
+    subPath: torrents/movies
+    readOnly: true
+  - name: media2
+    mountPath: /media/tv/media2
+    subPath: torrents/tv
+    readOnly: true
+  - name: media3
+    mountPath: /media/movies/media3
+    subPath: torrents/movies
+    readOnly: true
+  - name: media3
+    mountPath: /media/tv/media3
+    subPath: torrents/tv
+    readOnly: true
+  - name: dri
+    mountPath: /dev/dri
+
+metrics:
+  enabled: false
+  serviceMonitor:
+    enabled: false
+
+networkPolicy:
+  enabled: false

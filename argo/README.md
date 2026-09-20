@@ -11,6 +11,8 @@ Current Applications:
 - `traefik-routes` watches `argo/workloads/traefik/`.
 - `monitoring` renders the Prometheus Community `kube-prometheus-stack` Helm
   chart with values stored in `argo/values/monitoring/`.
+- `jellyfin` renders the official Jellyfin Helm chart, mounts the existing NAS
+  media exports, and uses values stored in `argo/values/jellyfin/`.
 
 The root Application is bootstrapped or updated explicitly because its
 manifest lives outside the directory it watches:
@@ -22,6 +24,18 @@ kubectl apply -f bootstrap/argocd/homelab.yaml
 After the root exists, changes under `argo/applications/` and the child
 workload directories are reconciled from Git by Argo CD.
 
+Required node-placement labels:
+
+```bash
+kubectl label node mini-pc homelab.io/storage-safe=true \
+  homelab.io/jellyfin=true --overwrite
+kubectl label node nas homelab.io/storage-safe=true --overwrite
+```
+
+Grafana and Prometheus use `homelab.io/storage-safe`; Jellyfin uses
+`homelab.io/jellyfin`. These labels keep persistent and write-heavy workloads
+off the Raspberry Pi SD cards without tainting the control-plane node.
+
 Current HTTP routes:
 
 - `http://argocd.home/`
@@ -29,6 +43,7 @@ Current HTTP routes:
 - `http://homepage.home/`
 - `http://grafana.home/`
 - `http://prometheus.home/`
+- `http://jellyfin.home/`
 
 The Homepage instance uses read-only Kubernetes permissions to discover
 annotated Ingress and Traefik IngressRoute resources. Add `homepage.home` to

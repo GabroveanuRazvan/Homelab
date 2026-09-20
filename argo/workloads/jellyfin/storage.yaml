@@ -1,0 +1,136 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: jellyfin-media1
+  labels:
+    app.kubernetes.io/name: jellyfin
+    app.kubernetes.io/component: media
+spec:
+  capacity:
+    storage: 1769Gi # Volume 1 size
+  accessModes:
+    - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  mountOptions:
+    - nfsvers=4.1
+    - hard
+    - timeo=600
+    - retrans=2
+  nfs:
+    server: 192.168.50.254
+    path: /volume1/docker/media
+    readOnly: true
+
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: jellyfin-media2
+  labels:
+    app.kubernetes.io/name: jellyfin
+    app.kubernetes.io/component: media
+spec:
+  capacity:
+    storage: 3567Gi # Volume 2 size
+  accessModes:
+    - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  mountOptions:
+    - nfsvers=4.1
+    - hard
+    - timeo=600
+    - retrans=2
+  nfs:
+    server: 192.168.50.254
+    path: /volume2/media
+    readOnly: true
+
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: jellyfin-media3
+  labels:
+    app.kubernetes.io/name: jellyfin
+    app.kubernetes.io/component: media
+spec:
+  capacity:
+    storage: 885Gi # Volume 3 size
+  accessModes:
+    - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  mountOptions:
+    - nfsvers=4.1
+    - hard
+    - timeo=600
+    - retrans=2
+  nfs:
+    server: 192.168.50.254
+    path: /volume3/media3
+    readOnly: true
+
+
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jellyfin-media1
+  namespace: jellyfin
+  labels:
+    app.kubernetes.io/name: jellyfin
+    app.kubernetes.io/component: media
+spec:
+  accessModes:
+    - ReadOnlyMany
+  storageClassName: ""
+  volumeName: jellyfin-media1
+  resources:
+    requests:
+      storage: 1Gi
+
+
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jellyfin-media2
+  namespace: jellyfin
+  labels:
+    app.kubernetes.io/name: jellyfin
+    app.kubernetes.io/component: media
+spec:
+  accessModes:
+    - ReadOnlyMany
+  storageClassName: ""
+  volumeName: jellyfin-media2
+  resources:
+    requests:
+      storage: 1Gi
+
+
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jellyfin-media3
+  namespace: jellyfin
+  labels:
+    app.kubernetes.io/name: jellyfin
+    app.kubernetes.io/component: media
+spec:
+  accessModes:
+    - ReadOnlyMany
+  storageClassName: ""
+  volumeName: jellyfin-media3
+  resources:
+    requests:
+      storage: 1Gi

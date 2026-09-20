@@ -30,8 +30,9 @@ grafana:
     GF_PLUGINS_PREINSTALL_AUTO_UPDATE: "false"
   ingress:
     enabled: false
-  # Allow Grafana to be initially scheduled on any node. The local-path PVC
-  # then remains attached to whichever node the scheduler selects.
+  # Keep persistent monitoring data away from Raspberry Pi SD cards.
+  nodeSelector:
+    homelab.io/storage-safe: "true"
   persistence:
     enabled: true
     type: sts
@@ -65,16 +66,8 @@ prometheus:
   prometheusSpec:
     # Keep the write-heavy TSDB away from the Raspberry Pi SD cards. Its
     # local-path PVC binds to either mini-pc or nas after initial scheduling.
-    affinity:
-      nodeAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-            - matchExpressions:
-                - key: kubernetes.io/hostname
-                  operator: In
-                  values:
-                    - mini-pc
-                    - nas
+    nodeSelector:
+      homelab.io/storage-safe: "true"
     retention: 7d
     retentionSize: 8GB
     resources:
