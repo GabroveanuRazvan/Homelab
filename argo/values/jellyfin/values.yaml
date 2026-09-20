@@ -4,6 +4,11 @@ revisionHistoryLimit: 3
 
 fullnameOverride: jellyfin
 
+image:
+  repository: docker.io/jellyfin/jellyfin
+  tag: "12.1"
+  pullPolicy: IfNotPresent
+
 serviceAccount:
   create: true
   automount: false
