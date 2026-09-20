@@ -17,7 +17,7 @@ spec:
     - web
   routes:
     - kind: Rule
-      match: Host(`jellyfin.home`)
+      match: Host(`jellyfin.home`) || Host(`192.168.50.215`)
       services:
         - name: jellyfin
           port: 8096
