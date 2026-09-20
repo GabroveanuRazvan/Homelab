@@ -23,6 +23,11 @@ grafana:
   enabled: true
   defaultDashboardsEnabled: true
   defaultDashboardsTimezone: Europe/Bucharest
+  # Grafana 13 otherwise attempts to update its bundled data-source plugins
+  # in the read-only image filesystem. The failed update stops plugins such
+  # as Prometheus and leaves every dashboard without a usable data source.
+  env:
+    GF_PLUGINS_PREINSTALL_AUTO_UPDATE: "false"
   ingress:
     enabled: false
   # Allow Grafana to be initially scheduled on any node. The local-path PVC
