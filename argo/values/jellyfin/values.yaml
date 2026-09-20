@@ -29,8 +29,8 @@ nodeSelector:
 
 podSecurityContext:
   supplementalGroups:
-    - 44
-    - 992
+    - 44 # video group
+    - 992 # render group
 
 resources:
   requests:
@@ -109,9 +109,12 @@ volumeMounts:
     mountPath: /dev/dri
 
 metrics:
-  enabled: false
+  enabled: true
   serviceMonitor:
-    enabled: false
+    enabled: true
+    labels:
+      release: monitoring
+    interval: 30s
 
 networkPolicy:
   enabled: false
