@@ -119,7 +119,8 @@ metrics:
     enabled: true
     labels:
       release: monitoring
-    interval: 30s
+    interval: 15s
+    scrapeTimeout: 10s
 
 networkPolicy:
   enabled: false
