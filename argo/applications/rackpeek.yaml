@@ -1,0 +1,24 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: rackpeek
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: git@github.com:GabroveanuRazvan/Homelab.git
+    targetRevision: main
+    path: argo/workloads/rackpeek
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: rackpeek
+  syncPolicy:
+    automated:
+      enabled: true
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
