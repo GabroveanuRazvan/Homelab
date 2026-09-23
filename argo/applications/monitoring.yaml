@@ -19,6 +19,9 @@ spec:
     - repoURL: git@github.com:GabroveanuRazvan/Homelab.git
       targetRevision: main
       ref: values
+    - repoURL: git@github.com:GabroveanuRazvan/Homelab.git
+      targetRevision: main
+      path: argo/workloads/monitoring
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring

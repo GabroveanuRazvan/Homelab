@@ -10,7 +10,8 @@ Current Applications:
 - `homepage` watches `argo/workloads/homepage/`.
 - `traefik-routes` watches `argo/workloads/traefik/`.
 - `monitoring` renders the Prometheus Community `kube-prometheus-stack` Helm
-  chart with values stored in `argo/values/monitoring/`.
+  chart with values stored in `argo/values/monitoring/` and applies Grafana
+  dashboard ConfigMaps from `argo/workloads/monitoring/`.
 - `jellyfin` renders the official Jellyfin Helm chart, mounts the existing NAS
   media exports, and uses values stored in `argo/values/jellyfin/`.
 
@@ -23,6 +24,14 @@ kubectl apply -f bootstrap/argocd/homelab.yaml
 
 After the root exists, changes under `argo/applications/` and the child
 workload directories are reconciled from Git by Argo CD.
+
+Grafana dashboards can be built in the UI and exported as V2 resource JSON.
+The dashboard JSON is stored under the `jellyfin.json` key of a ConfigMap
+labeled `grafana_dashboard: "1"` in `argo/workloads/monitoring/`. Grafana's
+dashboard sidecar loads that file. Keep the exported dashboard's
+`metadata.name` when updating the ConfigMap so the dashboard URL stays the
+same. Commit UI edits back to the ConfigMap; later Git updates overwrite
+edits saved only in Grafana.
 
 Required node-placement labels:
 
