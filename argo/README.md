@@ -53,6 +53,7 @@ Current HTTP routes:
 - `http://grafana.home/`
 - `http://prometheus.home/`
 - `http://jellyfin.home/`
+- `http://rackpeek.home/`
 
 The Homepage instance uses read-only Kubernetes permissions to discover
 annotated Ingress and Traefik IngressRoute resources. Add `homepage.home` to

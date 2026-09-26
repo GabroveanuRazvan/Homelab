@@ -1,273 +1,138 @@
-# Homelab control plane
+# Homelab
 
-This repository is the source of truth for managing the homelab. Ansible
-provisions the hosts and bootstraps k3s; Docker Compose files live alongside
-it, with Helm charts and Kubernetes resources intended to follow.
+This repository contains most of the tools and configuration used to set up,
+bootstrap, and operate my homelab. It combines host provisioning with Ansible,
+a k3s Kubernetes cluster, Argo CD-managed applications, Helm values, standalone
+Docker Compose workloads, and supporting automation scripts.
+
+## Homelab topology
+
+```mermaid
+%%{init: {'layout': 'elk', 'flowchart': {'curve': 'step', 'nodeSpacing': 60, 'rankSpacing': 80, 'padding': 20, 'subGraphTitleMargin': {'top': 12, 'bottom': 12}}, 'elk': {'algorithm': 'layered', 'aspectRatio': 0.5, 'layered.wrapping.strategy': 'MULTI_EDGE', 'layered.nodePlacement.strategy': 'BRANDES_KOEPF'}, 'themeVariables': {'edgeLabelBackground': 'transparent', 'clusterBkg': 'transparent', 'clusterBorder': '#3f3f46'}}}%%
+flowchart TD
+    classDef rpknode fill:#1f2937,stroke:#52525b,color:#e5e7eb,stroke-width:1px,stroke-dasharray:3 3
+    classDef rpkgroup fill:none,stroke:#3f3f46,color:#a1a1aa,stroke-width:1px,stroke-dasharray:3 3
+
+    n_mini_pc("Mini-PC<br/>desktop"):::rpknode
+    n_nas("Nas<br/>desktop"):::rpknode
+    n_pi1("Pi1<br/>desktop"):::rpknode
+    n_pi2("Pi2<br/>desktop"):::rpknode
+    n_router(["Router<br/>router"]):::rpknode
+    n_switch[["Switch<br/>switch"]]:::rpknode
+    n_ups{"UPS<br/>ups"}:::rpknode
+
+    n_switch ---|"router <-> switch"| n_router
+    n_switch ---|"mini-pc <-> switch"| n_mini_pc
+    n_switch ---|"pi2 <-> switch"| n_pi2
+    n_switch ---|"pi1 <-> switch"| n_pi1
+    n_nas ---|"nas <-> router"| n_router
+
+    linkStyle default stroke:#52525b,stroke-width:1.25px,stroke-dasharray:4 4,fill:none
+```
 
 ## Repository layout
 
-- `ansible/` contains inventories, playbooks, variables, roles, and its local
-  Ansible configuration.
-- `argo/` contains Kubernetes resources reconciled by Argo CD.
-- `bootstrap/` contains the one-time root Argo CD Application manifest.
-- `docker/` contains standalone Docker Compose workloads.
-- `helm/` contains values for charts installed outside Ansible.
-- `scripts/` contains local helpers such as the disposable Multipass lab.
-- `COMMANDS.md` is an evolving cheat sheet of useful homelab CLI commands.
-- `ARGOCD.md` documents the manual Helm-to-GitOps bootstrap workflow.
-
-The provisioning playbooks turn a fresh Debian-family host into a reusable
-homelab development machine. They install administration and networking tools,
-C/C++ build tools, an eBPF toolchain, pinned Go and Go eBPF tooling, Rust and
-Cargo, Docker Engine with Compose, kubectl, Helm, and SSH.
-
-Base provisioning deliberately does **not** install k3s, CUPS, applications,
-or firewall policy. k3s has its own cluster playbook so machines can be
-provisioned without automatically joining a cluster.
-
-## Prerequisites
-
-The controller needs Ansible and SSH access to each target. The target must use
-the Debian OS family, apt, and systemd, and should have Python 3 and OpenSSH
-Server available. On a fresh host:
-
-```bash
-ssh-copy-id razvan@192.168.50.20
-ssh razvan@192.168.50.20
-sudo visudo -f /etc/sudoers.d/razvan
-```
-
-Add this line through `visudo`:
-
 ```text
-razvan ALL=(ALL:ALL) NOPASSWD: ALL
+.
+├── ansible
+│   ├── group_vars
+│   │   └── all
+│   └── roles
+│       ├── common
+│       │   ├── defaults
+│       │   └── tasks
+│       ├── development
+│       │   ├── defaults
+│       │   └── tasks
+│       ├── docker
+│       │   ├── defaults
+│       │   └── tasks
+│       ├── ebpf
+│       │   ├── defaults
+│       │   └── tasks
+│       ├── golang
+│       │   ├── defaults
+│       │   └── tasks
+│       ├── helm
+│       │   ├── defaults
+│       │   └── tasks
+│       ├── k3s_agent
+│       │   ├── defaults
+│       │   ├── handlers
+│       │   ├── tasks
+│       │   └── templates
+│       ├── k3s_common
+│       │   ├── defaults
+│       │   └── tasks
+│       ├── k3s_server
+│       │   ├── defaults
+│       │   ├── handlers
+│       │   ├── tasks
+│       │   └── templates
+│       ├── kubectl
+│       │   ├── defaults
+│       │   └── tasks
+│       └── rust
+│           ├── defaults
+│           └── tasks
+├── argo
+│   ├── applications
+│   ├── values
+│   │   ├── jellyfin
+│   │   └── monitoring
+│   └── workloads
+│       ├── homepage
+│       ├── jellyfin
+│       ├── monitoring
+│       ├── rackpeek
+│       └── traefik
+├── bootstrap
+│   └── argocd
+├── docker
+├── helm
+│   └── argocd
+└── scripts
+    └── argocd
+
+60 directories
 ```
 
-Passwordless sudo lets unattended, `become: true` tasks run without
-`--ask-become-pass`. Only grant it to the trusted administration account.
+## Main directories
 
-## Inventory and variables
+### `ansible/`
 
-Edit `ansible/inventory.ini`, uncomment a host, and replace its example
-address. The playbook targets the reusable `provision_targets` group, never a
-hardcoded host. For example:
+Ansible inventory, shared variables, playbooks, and reusable roles for
+provisioning Debian/Ubuntu hosts. The roles install the common administration
+toolset and development environment, Docker, Go, Rust, eBPF tooling, kubectl,
+and Helm. The k3s roles bootstrap and manage the Kubernetes server and agent
+nodes separately from general host provisioning.
 
-```ini
-[mini_pcs]
-mini-pc ansible_host=192.168.50.20
+### `argo/`
 
-[provision_targets:children]
-mini_pcs
+The desired Kubernetes application state reconciled by Argo CD. It contains
+Argo CD `Application` resources, chart values, raw workload manifests, storage
+configuration, monitoring resources, and Traefik routes for homelab services.
 
-[all:vars]
-ansible_user=razvan
-```
+### `bootstrap/`
 
-Feature switches and pinned versions live in `ansible/group_vars/all/main.yml`.
-Host- or group-specific files can override them. The Go download architecture
-is derived from each host, and checksums for amd64 and arm64 are included.
+The small amount of configuration that must be applied before GitOps can take
+over. The root Argo CD application in this directory connects the cluster to
+the application definitions under `argo/`.
 
-Run Ansible commands from the `ansible/` directory so its `ansible.cfg` is
-loaded. Test connectivity and inspect changes first:
+### `docker/`
 
-```bash
-cd ansible
-ansible all -m ping
-ansible-playbook distributions.yml
-ansible-playbook provision.yml --check --diff
-```
+Docker Compose definitions for services that can run directly on a Docker
+host, independently of the k3s cluster. These currently cover Jellyfin,
+Pi-hole, and qBittorrent.
 
-`distributions.yml` only gathers facts and prints each reachable host's
-distribution, OS family, package and service managers, architecture, and memory
-cgroup availability; it does not install or change anything.
+### `helm/`
 
-Provision every target, or only one host:
+Helm configuration used to install or configure foundational cluster services.
+At present it contains the values used for the initial Argo CD installation.
 
-```bash
-ansible-playbook provision.yml
-ansible-playbook provision.yml --limit mini-pc
-```
+### `scripts/`
 
-Upgrade the default `homelab` group, one host, or another inventory group:
+Operational helper scripts. The Argo CD scripts install and remove Argo CD and
+configure its Git repository credentials. `multipass-lab.py` creates a
+disposable local multi-node environment for testing the Ansible and k3s setup.
 
-```bash
-ansible-playbook update.yml
-ansible-playbook update.yml --limit mini-pc
-ansible-playbook update.yml -e update_target_group=provision_targets
-```
-
-## Roles
-
-- `common` installs SSH, CLI, administration, networking, debugging, and the
-  `nfs-common` client tools required for mounting NFS-backed Kubernetes
-  volumes. It also installs Oh My Zsh for the primary user, preserves an
-  existing `.zshrc`, and adds `alias ip="ip -color=auto"` only when absent. It
-  installs UFW but does not activate or configure firewall policy.
-- `development` installs compilers, build systems, autotools, and GDB.
-- `ebpf` installs Clang, LLVM, libbpf, bpftool, ELF/zlib development libraries,
-  and headers matching `ansible_kernel`. Missing matching headers fail with an
-  actionable message.
-- `golang` downloads the checksum-verified upstream archive into
-  `/usr/local/go`. It installs pinned `bpf2go` as the normal user under
-  `~/go/bin`; profile snippets and an idempotent `.zshrc` block expose both
-  paths.
-- `rust` installs rustup, stable Rust, Cargo, rustfmt, and clippy for the normal
-  user under `~/.cargo` and `~/.rustup`. An idempotent `.zshrc` block exposes
-  Cargo and installed Rust tools to interactive Zsh sessions.
-- `docker` uses Docker's official signed apt repository for the detected Ubuntu
-  or Debian distribution, enables the engine, installs Buildx and Compose, and
-  appends the user to the `docker` group. Log out and back in before using
-  Docker without sudo.
-- `kubectl` installs the Kubernetes client from the official versioned apt
-  repository. `kubernetes_minor_version` selects its minor release channel, and
-  the role enables Zsh completion without replacing `.zshrc`.
-- `helm` installs the Helm client from its Debian/Ubuntu apt repository, checks
-  the repository key fingerprint, and enables Zsh completion without replacing
-  `.zshrc`.
-
-## Verification
-
-Most roles verify their important commands during the run. Useful manual checks
-are:
-
-```bash
-git --version && curl --version && jq --version && tmux -V
-gcc --version && g++ --version && cmake --version && gdb --version
-clang --version && llvm-config --version && bpftool version
-test -d "/usr/src/linux-headers-$(uname -r)"
-go version && bpf2go -h
-rustc --version && cargo --version
-docker --version && docker compose version
-kubectl version --client
-helm version --short
-```
-
-The roles use package state, checksums, `creates`, templates, and service state,
-so it is safe and expected to rerun `provision.yml`. A second run should be
-mostly `ok`; rustup may contact its update channel and apt metadata can refresh.
-
-## Adding machines and future roles
-
-Add the host to a category such as `mini_pcs` or `raspberry_pis`, then include
-that category beneath `provision_targets:children` when it should receive the
-base roles. Use inventory variables to override versions or feature switches.
-
-## k3s cluster bootstrap
-
-k3s remains separate from base provisioning. The initial implementation
-supports Debian-family hosts using apt and systemd on x86_64, aarch64, or
-armv7l, with exactly one control-plane server and zero or more workers. Select
-the roles explicitly in `ansible/inventory.ini`:
-
-```ini
-[k3s_control_plane]
-vm1
-
-[k3s_workers]
-# pi1
-# pi2
-
-[k3s_cluster:children]
-k3s_control_plane
-k3s_workers
-```
-
-Hosts can appear in several groups; the aliases above refer to hosts declared
-elsewhere in the same inventory. Ensure each alias and machine hostname is
-unique, its address is stable, and SSH/passwordless sudo work before starting.
-
-Bootstrap or safely reconcile the entire configured cluster with:
-
-```bash
-ansible k3s_cluster -m ping
-ansible-playbook k3s.yml
-```
-
-Do not use `--limit` for the initial cluster bootstrap: all configured cluster
-members should participate in the orchestration. The playbook:
-
-1. validates the inventory topology;
-2. installs the pinned server on `k3s_control_plane`;
-3. waits for the Kubernetes API on TCP `6443`;
-4. reads the generated join token with `no_log: true`;
-5. installs and joins every `k3s_workers` host; and
-6. waits for every inventory node to report `Ready`.
-
-The token is not stored in inventory. k3s keeps it on the server and Ansible
-holds it in memory only long enough to render each worker's root-only
-`/etc/rancher/k3s/config.yaml`. The playbook is safe to rerun and also upgrades
-server and agent binaries when `k3s_version` changes.
-
-The common role verifies that the memory cgroup controller is available before
-installing k3s. If it is disabled on Raspberry Pi OS, append
-`cgroup_memory=1 cgroup_enable=memory` to `/boot/firmware/cmdline.txt` (or
-`/boot/cmdline.txt` on older releases), reboot, and rerun the playbook.
-
-### Disposable Multipass test cluster
-
-Create three local Ubuntu 24.04 VMs (one server and two workers) and generate a
-dedicated Ansible inventory with:
-
-```bash
-./scripts/multipass-lab.py create
-ansible-playbook -i ansible/inventory.multipass.ini ansible/distributions.yml
-ansible -i ansible/inventory.multipass.ini k3s_cluster -m ping
-ansible-playbook -i ansible/inventory.multipass.ini ansible/k3s.yml
-```
-
-The script reuses the key recorded in an existing generated inventory, then
-falls back to `~/.ssh/id_ed25519` or `~/.ssh/id_rsa`. Select another key pair by
-setting `MULTIPASS_LAB_SSH_KEY` to the private key path. Existing lab instances
-are started and reused. Inspect or permanently remove the three specifically
-named instances with:
-
-```bash
-./scripts/multipass-lab.py status
-./scripts/multipass-lab.py destroy
-```
-
-The generated inventory and its isolated SSH known-hosts file are written under
-`ansible/` and ignored by Git. The normal `ansible/inventory.ini` and physical
-homelab hosts are never targeted.
-
-Cluster settings are in `ansible/group_vars/all/main.yml`:
-
-```yaml
-k3s_version: "v1.36.4+k3s1"
-k3s_api_port: 6443
-k3s_server_extra_config: {}
-k3s_agent_extra_config: {}
-```
-
-The server kubeconfig remains at `/etc/rancher/k3s/k3s.yaml`, mode `0640`, and
-is readable by `k3s_kubeconfig_group` (the primary user's group by default).
-The server role adds `KUBECONFIG` to the primary user's `.zshrc` and also
-publishes it through `/etc/profile.d/k3s.sh`. Open a new shell after the first
-run, or load the profile immediately in the current shell:
-
-```bash
-source /etc/profile.d/k3s.sh
-kubectl get nodes -o wide
-kubectl get pods --all-namespaces
-```
-
-k3s uses its embedded containerd by default. The Docker Engine installed by
-`provision.yml` can coexist with it but is not the Kubernetes container runtime.
-High-availability multi-server k3s is intentionally not part of this first
-version; it requires an odd number of server nodes and additional datastore,
-endpoint, quorum, backup, and upgrade decisions.
-
-## Troubleshooting
-
-- `UNREACHABLE` or `Permission denied`: confirm the IP/user, run `ssh` manually,
-  copy the public key again, and inspect `ssh -v` output.
-- A sudo password prompt or `Missing sudo password`: validate the sudoers
-  drop-in with `sudo visudo -c` and test `sudo -n true` on the target.
-- Missing kernel headers: enable the appropriate distribution repositories,
-  update packages, reboot into the installed kernel, and provision again.
-- Docker permission denied: start a new login session after group membership
-  changes; confirm with `id` that `docker` is listed.
-- k3s API timeout: verify the controller and workers can reach the control-plane
-  address on TCP `6443`, and check `journalctl -u k3s` on the server.
-- A worker does not join: check `journalctl -u k3s-agent` on that worker and
-  confirm it can resolve or reach `k3s_server_address`.
