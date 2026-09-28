@@ -23,6 +23,13 @@ grafana:
   enabled: true
   defaultDashboardsEnabled: true
   defaultDashboardsTimezone: Europe/Bucharest
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      uid: loki
+      access: proxy
+      url: http://loki.logging.svc.cluster.local:3100
+      isDefault: false
   # Grafana 13 otherwise attempts to update its bundled data-source plugins
   # in the read-only image filesystem. The failed update stops plugins such
   # as Prometheus and leaves every dashboard without a usable data source.

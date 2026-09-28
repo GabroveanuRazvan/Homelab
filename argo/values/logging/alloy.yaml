@@ -1,0 +1,75 @@
+---
+crds:
+  create: false
+
+controller:
+  type: deployment
+  replicas: 1
+
+alloy:
+  enableReporting: false
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  configMap:
+    content: |-
+      discovery.kubernetes "jellyfin" {
+        role = "pod"
+
+        namespaces {
+          names = ["jellyfin"]
+        }
+      }
+
+      discovery.relabel "jellyfin" {
+        targets = discovery.kubernetes.jellyfin.targets
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_container_name"]
+          action        = "keep"
+          regex         = "jellyfin"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label  = "namespace"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_name"]
+          target_label  = "pod"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_container_name"]
+          target_label  = "container"
+        }
+      }
+
+      loki.source.kubernetes "jellyfin" {
+        targets    = discovery.relabel.jellyfin.output
+        forward_to = [loki.write.default.receiver]
+      }
+
+      loki.write "default" {
+        endpoint {
+          url = "http://loki.logging.svc.cluster.local:3100/loki/api/v1/push"
+        }
+      }
+
+# The chart creates a Role in jellyfin and binds it to Alloy's ServiceAccount
+# in logging. Alloy cannot list or read logs from other namespaces.
+rbac:
+  namespaces:
+    - jellyfin
+  rules:
+    - apiGroups: [""]
+      resources: ["pods"]
+      verbs: ["get", "list", "watch"]
+    - apiGroups: [""]
+      resources: ["pods/log"]
+      verbs: ["get"]
