@@ -65,6 +65,17 @@
     group: root
     mode: "0755"
 
+- name: Validate the managed container registry configuration
+  ansible.builtin.assert:
+    that:
+      - k3s_registries is mapping
+      - k3s_registries | length > 0
+    fail_msg: >-
+      k3s_manage_registries is enabled, but k3s_registries does not contain
+      a registry configuration.
+  when: k3s_manage_registries | bool
+  no_log: true
+
 - name: Download the installer from the pinned k3s release
   ansible.builtin.get_url:
     url: "{{ k3s_install_script_url }}"

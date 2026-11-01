@@ -10,3 +10,8 @@ k3s_install_script_url: >-
 k3s_server_host: "{{ groups['k3s_control_plane'][0] }}"
 k3s_server_address: >-
   {{ hostvars[k3s_server_host].ansible_host | default(k3s_server_host) }}
+
+# Set this to true after defining k3s_registries in group_vars. Credentials
+# referenced by k3s_registries should be kept in an Ansible Vault file.
+k3s_manage_registries: false
+k3s_registries: {}

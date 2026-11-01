@@ -57,6 +57,7 @@
 
 - name: Join k3s worker nodes
   hosts: k3s_workers
+  serial: 1
   become: true
   gather_facts: true
 

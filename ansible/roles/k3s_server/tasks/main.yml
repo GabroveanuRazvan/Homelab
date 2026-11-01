@@ -4,6 +4,17 @@
     path: /etc/systemd/system/k3s.service
   register: k3s_server_unit
 
+- name: Configure container registries for the k3s server
+  ansible.builtin.template:
+    src: "{{ playbook_dir }}/templates/k3s/registries.yaml.j2"
+    dest: /etc/rancher/k3s/registries.yaml
+    owner: root
+    group: root
+    mode: "0600"
+  when: k3s_manage_registries | bool
+  notify: Restart k3s server
+  no_log: true
+
 - name: Configure the k3s server
   ansible.builtin.template:
     src: config.yaml.j2

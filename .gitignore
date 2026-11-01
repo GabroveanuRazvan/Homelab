@@ -7,3 +7,5 @@ inventory.multipass.ini
 inventory.multipass.ini.*
 .multipass_known_hosts
 .multipass-cloud-init.*
+
+docker/registry-test/
