@@ -5,8 +5,8 @@
     "name": "adtwj7q",
     "namespace": "default",
     "uid": "928fa8d9-72bb-4918-bec6-fdb7ef660f07",
-    "resourceVersion": "1790159772247991",
-    "generation": 11,
+    "resourceVersion": "1794084346814002",
+    "generation": 12,
     "creationTimestamp": "2026-09-21T19:44:36Z",
     "labels": {
       "grafana.app/deprecatedInternalID": "3444413847396352"
@@ -15,11 +15,11 @@
       "grafana.app/createdBy": "user:dfyr655ztb0g0c",
       "grafana.app/managedBy": "classic-file-provisioning",
       "grafana.app/managerId": "sidecarProvider",
-      "grafana.app/sourceChecksum": "f34c1b5a06ec7b0fee24e05b1b95d750",
+      "grafana.app/sourceChecksum": "229b4954bbbd4613299317118d356484",
       "grafana.app/sourcePath": "/tmp/dashboards/jellyfin.json",
-      "grafana.app/sourceTimestamp": "1790159744000",
-      "grafana.app/updatedBy": "user:dfyr655ztb0g0c",
-      "grafana.app/updatedTimestamp": "2026-09-23T10:24:20Z",
+      "grafana.app/sourceTimestamp": "1794084345000",
+      "grafana.app/updatedBy": "access-policy:service",
+      "grafana.app/updatedTimestamp": "2026-11-07T20:45:46Z",
       "grafana.app/folder": ""
     }
   },
