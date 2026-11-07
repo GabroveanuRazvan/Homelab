@@ -26,12 +26,13 @@ After the root exists, changes under `argo/applications/` and the child
 workload directories are reconciled from Git by Argo CD.
 
 Grafana dashboards can be built in the UI and exported as V2 resource JSON.
-The dashboard JSON is stored under the `jellyfin.json` key of a ConfigMap
-labeled `grafana_dashboard: "1"` in `argo/workloads/monitoring/`. Grafana's
-dashboard sidecar loads that file. Keep the exported dashboard's
-`metadata.name` when updating the ConfigMap so the dashboard URL stays the
-same. Commit UI edits back to the ConfigMap; later Git updates overwrite
-edits saved only in Grafana.
+Store exported dashboards as standalone JSON files under
+`argo/workloads/monitoring/dashboards/`. The Kustomize configuration in that
+workload directory generates ConfigMaps labeled `grafana_dashboard: "1"`,
+which Grafana's dashboard sidecar loads. Keep an exported dashboard's
+`metadata.name` when replacing its JSON file so the dashboard URL stays the
+same. Commit UI edits back to the JSON file; later Git updates overwrite edits
+saved only in Grafana.
 
 Required node-placement labels:
 
