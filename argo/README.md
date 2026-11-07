@@ -12,6 +12,9 @@ Current Applications:
 - `monitoring` renders the Prometheus Community `kube-prometheus-stack` Helm
   chart with values stored in `argo/values/monitoring/` and applies Grafana
   dashboard ConfigMaps from `argo/workloads/monitoring/`.
+- `logging` renders the Loki and Alloy Helm charts with values stored in
+  `argo/values/logging/`. Kustomize generates Alloy's ConfigMap from the
+  standalone configuration in `argo/workloads/logging/`.
 - `jellyfin` renders the official Jellyfin Helm chart, mounts the existing NAS
   media exports, and uses values stored in `argo/values/jellyfin/`.
 

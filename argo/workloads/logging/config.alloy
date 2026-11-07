@@ -1,0 +1,62 @@
+discovery.kubernetes "jellyfin" {
+  role = "pod"
+
+  namespaces {
+    names = ["jellyfin"]
+  }
+}
+
+discovery.relabel "jellyfin" {
+  targets = discovery.kubernetes.jellyfin.targets
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_container_name"]
+    action        = "keep"
+    regex         = "jellyfin"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_namespace"]
+    target_label  = "namespace"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_name"]
+    target_label  = "pod"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_container_name"]
+    target_label  = "container"
+  }
+}
+
+loki.source.kubernetes "jellyfin" {
+  targets    = discovery.relabel.jellyfin.output
+  forward_to = [loki.process.jellyfin.receiver]
+}
+
+loki.process "jellyfin" {
+  forward_to = [loki.write.default.receiver]
+
+  stage.regex {
+    expression = "^\\[[0-9:]+\\] \\[(?P<level>INF|WRN|ERR|DBG|TRC|FTL)\\]"
+  }
+
+  stage.template {
+    source   = "level"
+    template = `{{ if eq .Value "INF" }}info{{ else if eq .Value "WRN" }}warn{{ else if eq .Value "ERR" }}error{{ else if eq .Value "DBG" }}debug{{ else if eq .Value "TRC" }}trace{{ else if eq .Value "FTL" }}critical{{ else }}unknown{{ end }}`
+  }
+
+  stage.labels {
+    values = {
+      level = "",
+    }
+  }
+}
+
+loki.write "default" {
+  endpoint {
+    url = "http://loki.logging.svc.cluster.local:3100/loki/api/v1/push"
+  }
+}
