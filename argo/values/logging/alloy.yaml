@@ -52,7 +52,26 @@ alloy:
 
       loki.source.kubernetes "jellyfin" {
         targets    = discovery.relabel.jellyfin.output
+        forward_to = [loki.process.jellyfin.receiver]
+      }
+
+      loki.process "jellyfin" {
         forward_to = [loki.write.default.receiver]
+
+        stage.regex {
+          expression = "^\\[[0-9:]+\\] \\[(?P<level>INF|WRN|ERR|DBG|TRC|FTL)\\]"
+        }
+
+        stage.template {
+          source   = "level"
+          template = `{{ if eq .Value "INF" }}info{{ else if eq .Value "WRN" }}warn{{ else if eq .Value "ERR" }}error{{ else if eq .Value "DBG" }}debug{{ else if eq .Value "TRC" }}trace{{ else if eq .Value "FTL" }}critical{{ else }}unknown{{ end }}`
+        }
+
+        stage.labels {
+          values = {
+            level = "",
+          }
+        }
       }
 
       loki.write "default" {
