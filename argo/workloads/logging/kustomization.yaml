@@ -4,6 +4,9 @@ kind: Kustomization
 
 namespace: logging
 
+resources:
+  - syslog-service.yaml
+
 configMapGenerator:
   - name: alloy
     files:

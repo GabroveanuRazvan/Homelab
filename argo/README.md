@@ -37,6 +37,15 @@ which Grafana's dashboard sidecar loads. Keep an exported dashboard's
 same. Commit UI edits back to the JSON file; later Git updates overwrite edits
 saved only in Grafana.
 
+## Router syslog
+
+Alloy accepts RFC 3164 syslog from the ASUS TUF-AX3000 V2 through the
+`alloy-syslog` UDP NodePort Service. Configure the router's remote log server
+as `192.168.50.215` with port `30514`. Kubernetes forwards that endpoint to
+Alloy on UDP port `1514`, and the resulting Loki streams use `job="router"`
+and `device="tuf-ax3000-v2"` labels. Keep this endpoint accessible only from
+the private LAN.
+
 Required node-placement labels:
 
 ```bash

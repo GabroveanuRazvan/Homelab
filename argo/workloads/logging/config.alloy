@@ -55,6 +55,46 @@ loki.process "jellyfin" {
   }
 }
 
+loki.relabel "router_syslog" {
+  forward_to = []
+
+  rule {
+    source_labels = ["__syslog_message_severity"]
+    target_label  = "level"
+  }
+
+  rule {
+    source_labels = ["__syslog_message_facility"]
+    target_label  = "facility"
+  }
+
+  rule {
+    source_labels = ["__syslog_message_hostname"]
+    target_label  = "hostname"
+  }
+
+  rule {
+    source_labels = ["__syslog_message_app_name"]
+    target_label  = "application"
+  }
+}
+
+loki.source.syslog "router" {
+  listener {
+    address       = "0.0.0.0:1514"
+    protocol      = "udp"
+    syslog_format = "rfc3164"
+
+    labels = {
+      device = "tuf-ax3000-v2",
+      job    = "router",
+    }
+  }
+
+  relabel_rules = loki.relabel.router_syslog.rules
+  forward_to    = [loki.write.default.receiver]
+}
+
 loki.write "default" {
   endpoint {
     url = "http://loki.logging.svc.cluster.local:3100/loki/api/v1/push"
